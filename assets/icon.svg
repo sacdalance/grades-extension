@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Rounded green background -->
+  <rect width="128" height="128" rx="26" fill="#014421"/>
+
+  <!-- Graduation cap board (diamond) -->
+  <polygon points="64,18 108,42 64,66 20,42" fill="white"/>
+
+  <!-- Cap body -->
+  <path d="M40,50 L40,80 C40,94 51,103 64,103 C77,103 88,94 88,80 L88,50 L64,64 Z"
+        fill="white" fill-opacity="0.88"/>
+
+  <!-- Tassel string -->
+  <line x1="108" y1="42" x2="108" y2="70"
+        stroke="white" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Tassel ball -->
+  <circle cx="108" cy="76" r="6" fill="white"/>
+
+  <!-- Tassel fringe -->
+  <line x1="105" y1="78" x2="100" y2="91" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="108" y1="78" x2="108" y2="92" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="111" y1="78" x2="116" y2="91" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

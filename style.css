@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:host {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2147483647;
+  display: block;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* ── Entrance animations ─────────────────────────────────────────────────── */
+@keyframes gwa-slide-right {
+  from { transform: translateX(0.6rem); opacity: 0; }
+  to   { transform: translateX(0);      opacity: 1; }
+}
+
+@keyframes gwa-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes gwa-slide-up {
+  from { transform: translateY(0.6rem); opacity: 0; }
+  to   { transform: translateY(0);      opacity: 1; }
+}
+
+/* ── Button hover/active states ─────────────────────────────────────────── */
+.gwa-btn-primary {
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+.gwa-btn-primary:hover:not(:disabled) { background: #016030 !important; }
+.gwa-btn-primary:active:not(:disabled) { transform: translateY(1px); }
+
+.gwa-btn-secondary {
+  transition: background 0.12s ease;
+}
+.gwa-btn-secondary:hover { background: #f0f7f2 !important; }
+
+.gwa-icon-btn {
+  transition: color 0.1s ease, background 0.1s ease;
+}
+.gwa-icon-btn:hover { color: #333 !important; background: #f5f5f5 !important; }
+
+/* ── Input focus transitions ─────────────────────────────────────────────── */
+.gwa-input {
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.gwa-input:hover {
+  border-color: #bbb !important;
+  background: #fafafa !important;
+}
+.gwa-input:focus {
+  border-color: #014421 !important;
+  background: #fff !important;
+  outline: none;
+}
+
+/* ── Add term input ──────────────────────────────────────────────────────── */
+.gwa-text-input {
+  transition: border-color 0.12s ease;
+}
+.gwa-text-input:focus {
+  border-color: #014421 !important;
+  outline: none;
+}
+
+/* ── Delete button ───────────────────────────────────────────────────────── */
+.gwa-delete-btn {
+  transition: color 0.1s ease;
+}
+.gwa-delete-btn:hover { color: #c00 !important; }
+
+/* ── Add subject button ──────────────────────────────────────────────────── */
+.gwa-add-btn {
+  transition: color 0.12s ease, background 0.12s ease;
+}
+.gwa-add-btn:hover {
+  color: #014421 !important;
+  background: #f0f7f2 !important;
+}

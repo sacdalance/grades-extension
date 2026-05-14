@@ -1,0 +1,337 @@
+:root {
+    --upb-green: #014421;
+    --upb-gold: #b3a369;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a4a4a;
+    --accent: #2ecc71;
+}
+
+#gwa-dashboard-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gwa-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    min-width: 280px;
+    position: relative;
+    animation: slideIn 0.5s ease-out;
+}
+
+.gwa-close-btn-lg {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    transition: all 0.2s;
+    padding: 10px;
+    z-index: 10001;
+}
+
+.gwa-close-btn-lg:hover {
+    opacity: 1;
+    color: var(--upb-green);
+    transform: scale(1.1);
+}
+
+.gwa-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.gwa-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.gwa-header img {
+    width: 32px;
+    height: 32px;
+}
+
+.gwa-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--upb-green);
+    font-weight: 700;
+}
+
+.gwa-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.gwa-stat-item {
+    background: rgba(255, 255, 255, 0.5);
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.gwa-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.gwa-stat-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--upb-green);
+}
+
+.gwa-stat-value.highlight {
+    color: var(--accent);
+}
+
+.gwa-footer {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.gwa-section-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--upb-gold);
+    margin: 16px 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.gwa-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.gwa-btn {
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.gwa-btn.primary {
+    background: var(--upb-green);
+    color: white;
+}
+
+.gwa-btn.danger {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.gwa-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.gwa-btn.secondary {
+    background: rgba(1, 68, 33, 0.1);
+    color: var(--upb-green);
+    border: 1px solid rgba(1, 68, 33, 0.2);
+}
+
+.gwa-btn.secondary:hover { background: rgba(1, 68, 33, 0.2); }
+
+/* Modal Styles */
+.gwa-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.gwa-modal-content {
+    background: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 30px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalSlideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.gwa-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    border-bottom: 2px solid var(--upb-green);
+    padding-bottom: 12px;
+}
+
+.gwa-modal-header h2 {
+    margin: 0;
+    color: var(--upb-green);
+    font-size: 1.5rem;
+}
+
+.gwa-term-group {
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #eee;
+    overflow: hidden;
+}
+
+.gwa-term-header {
+    background: white;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.gwa-term-title {
+    font-weight: 700;
+    color: var(--upb-green);
+    flex: 1;
+}
+
+.gwa-term-summary {
+    display: flex;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    align-items: center;
+}
+
+.gwa-badge {
+    background: var(--upb-gold);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+
+.gwa-subject-list {
+    padding: 12px;
+}
+
+.gwa-subject-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.gwa-subject-table th {
+    text-align: left;
+    padding: 8px;
+    color: #999;
+}
+
+.gwa-subject-table td {
+    padding: 4px 8px;
+}
+
+.gwa-subject-table input {
+    width: 100%;
+    border: 1px solid transparent;
+    padding: 6px;
+    border-radius: 4px;
+    background: transparent;
+    transition: all 0.2s;
+}
+
+.gwa-subject-table input:hover, .gwa-subject-table input:focus {
+    background: white;
+    border-color: #ddd;
+    outline: none;
+}
+
+.gwa-btn-sm {
+    background: none;
+    border: 1px dashed var(--upb-green);
+    color: var(--upb-green);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+    font-weight: 600;
+}
+
+.gwa-btn-sm:hover {
+    background: rgba(1, 68, 33, 0.05);
+}
+
+.gwa-manual-add-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #eee;
+}
+
+.gwa-manual-add-section h3 {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.gwa-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px;
+    transition: transform 0.2s;
+}
+
+.gwa-icon-btn:hover {
+    transform: scale(1.2);
+}

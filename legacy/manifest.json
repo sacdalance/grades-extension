@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "UPB AMIS GWA Calculator",
+  "version": "1.0",
+  "description": "Calculates GWA automatically on the UPB AMIS portal.",
+  "permissions": ["activeTab", "storage"],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://amis-dev.upb.edu.ph/*",
+        "https://amis.upb.edu.ph/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "icons": {
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
