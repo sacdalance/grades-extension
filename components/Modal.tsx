@@ -10,7 +10,7 @@ interface Props {
   savedTerms: SavedTerms
   termOrder: string[]
   onClose: () => void
-  onUpdateSubject: (term: string, idx: number, field: keyof Subject, value: string | number) => Promise<void>
+  onUpdateSubject: (term: string, idx: number, changes: Partial<Subject>) => Promise<void>
   onAddSubject: (term: string) => Promise<void>
   onDeleteSubject: (term: string, idx: number) => Promise<void>
   onDeleteTerm: (term: string) => Promise<void>

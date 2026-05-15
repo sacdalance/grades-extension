@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { getScholarStatus, getLatinHonor } from "~utils/honors"
+import { getScholarStatus, getLatinHonor, displayScholar, displayLatin } from "~utils/honors"
 import { Button } from "~components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~components/ui/card"
 import { Separator } from "~components/ui/separator"
@@ -85,7 +85,7 @@ export function Dashboard({ current, cumulative, status, termAlreadySaved, onSav
         {/* Scholar banner */}
         {scholar.status && (
           <div className={`flex items-center justify-between px-5 py-1.5 ${scholar.status === "University Scholar" ? "bg-upb-green/90" : scholar.status === "Academic Achiever" ? "bg-upb-gold" : "bg-upb-maroon"}`}>
-            <span className="text-[10px] font-semibold text-white uppercase tracking-widest">{scholar.status}</span>
+            <span className="text-[10px] font-semibold text-white uppercase tracking-widest">{displayScholar(scholar.status)}</span>
             <span className="text-[10px] text-white/60 tabular-nums">{current.gwa.toFixed(4)}</span>
           </div>
         )}
@@ -141,7 +141,7 @@ export function Dashboard({ current, cumulative, status, termAlreadySaved, onSav
           {/* Latin honors banner */}
           {latinHonor && (
             <div className="flex items-center justify-between bg-upb-maroon -mx-4 px-5 py-1.5">
-              <span className="text-[10px] font-semibold text-white uppercase tracking-widest">{latinHonor}</span>
+              <span className="text-[10px] font-semibold text-white uppercase tracking-widest">{displayLatin(latinHonor)}</span>
               <span className="text-[10px] text-white/60 tabular-nums">{cumulative.gwa.toFixed(4)}</span>
             </div>
           )}

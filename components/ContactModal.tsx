@@ -7,9 +7,9 @@ interface Props {
 
 // ── Edit your details here ────────────────────────────────────────────────────
 const DEVELOPER = {
-  name:     "Lance Gabriel Sacdalan",
-  role:     "BS Computer Science, UP Baguio",
-  email:    "lancesacdalan1503@gmail.com",
+  name: "Lance Gabriel Sacdalan",
+  role: "IV - BS Computer Science, UP Baguio",
+  email: "lancesacdalan1503@gmail.com",
   linkedin: "https://www.linkedin.com/in/lance-gabriel-sacdalan/"
 }
 // ─────────────────────────────────────────────────────────────────────────────

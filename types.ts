@@ -2,6 +2,7 @@ export interface Subject {
   code: string
   units: number
   grade: number
+  gradeLabel?: string   // "INC" | "DRP" — overrides numeric display, always excludes from GWA
   excludeFromGWA?: boolean
 }
 

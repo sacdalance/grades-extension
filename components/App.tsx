@@ -1,6 +1,6 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useStorage } from "@plasmohq/storage/hook"
-import { Storage } from "@plasmohq/storage"
+import { Storage } from "@plasmohq/storage" // used by handleReset
 import { Dashboard } from "~components/Dashboard"
 import { Modal } from "~components/Modal"
 import { useGradeScanner } from "~hooks/useGradeScanner"
@@ -13,6 +13,8 @@ export function App() {
   const [savedTerms, setSavedTerms] = useStorage<SavedTerms>("savedTerms", (v) =>
     v === undefined ? {} : v
   )
+  const savedTermsRef = useRef<SavedTerms>(savedTerms ?? {})
+  savedTermsRef.current = savedTerms ?? {}
   const [termOrder, setTermOrder] = useStorage<string[]>("termOrder", (v) =>
     v === undefined ? [] : v
   )
@@ -63,18 +65,17 @@ export function App() {
   const handleUpdateSubject = async (
     termKey: string,
     idx: number,
-    field: keyof Subject,
-    value: string | number
+    changes: Partial<Subject>
   ) => {
-    const terms = { ...(savedTerms ?? {}) }
+    const terms = { ...savedTermsRef.current }
     const subjects = [...terms[termKey].subjects]
-    subjects[idx] = { ...subjects[idx], [field]: value }
+    subjects[idx] = { ...subjects[idx], ...changes }
     terms[termKey] = { ...terms[termKey], subjects }
     await persist(terms)
   }
 
   const handleAddSubject = async (termKey: string) => {
-    const terms = { ...(savedTerms ?? {}) }
+    const terms = { ...savedTermsRef.current }
     terms[termKey] = {
       ...terms[termKey],
       subjects: [...terms[termKey].subjects, { code: "New Subject", units: 3, grade: 1.0 }]
@@ -83,7 +84,7 @@ export function App() {
   }
 
   const handleDeleteSubject = async (termKey: string, idx: number) => {
-    const terms = { ...(savedTerms ?? {}) }
+    const terms = { ...savedTermsRef.current }
     terms[termKey] = {
       ...terms[termKey],
       subjects: terms[termKey].subjects.filter((_, i) => i !== idx)

@@ -36,3 +36,12 @@ export function getLatinHonor(cumulativeGwa: number): LatinHonor {
   if (cumulativeGwa <= 1.75) return "Cum Laude"
   return null
 }
+
+// ─── Display labels (always "Qualified for …" to indicate unofficial estimate) ─
+export function displayScholar(status: ScholarStatus): string {
+  return status ? `GWA Eligible for ${status}` : ""
+}
+
+export function displayLatin(honor: LatinHonor): string {
+  return honor ? `On Track for ${honor}` : ""
+}

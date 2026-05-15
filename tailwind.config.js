@@ -9,9 +9,9 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        "upb-green": "#014421",
-        "upb-maroon": "#7B0D1E",
-        "upb-gold": "#B8860B",
+        "upb-green": "#15803d",
+        "upb-maroon": "#18181b",
+        "upb-gold": "#d97706",
         border: "hsl(var(--border))",
         ring: "hsl(var(--ring))"
       },

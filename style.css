@@ -56,7 +56,7 @@
   background: #fafafa !important;
 }
 .gwa-input:focus {
-  border-color: #014421 !important;
+  border-color: #15803d !important;
   background: #fff !important;
   outline: none;
 }
@@ -66,7 +66,7 @@
   transition: border-color 0.12s ease;
 }
 .gwa-text-input:focus {
-  border-color: #014421 !important;
+  border-color: #15803d !important;
   outline: none;
 }
 
@@ -81,6 +81,6 @@
   transition: color 0.12s ease, background 0.12s ease;
 }
 .gwa-add-btn:hover {
-  color: #014421 !important;
+  color: #15803d !important;
   background: #f0f7f2 !important;
 }

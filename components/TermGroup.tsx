@@ -1,14 +1,16 @@
 import { useState } from "react"
-import { getScholarStatus } from "~utils/honors"
+import { getScholarStatus, displayScholar } from "~utils/honors"
 import { Input } from "~components/ui/input"
 import { X, Trash2 } from "lucide-react"
 import { ConfirmModal } from "~components/ConfirmModal"
 import type { Subject, Term } from "~types"
 
+const UP_GRADES = [1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00, 4.00, 5.00]
+
 interface Props {
   termKey: string
   term: Term
-  onUpdateSubject: (term: string, idx: number, field: keyof Subject, value: string | number) => Promise<void>
+  onUpdateSubject: (term: string, idx: number, changes: Partial<Subject>) => Promise<void>
   onAddSubject: (term: string) => Promise<void>
   onDeleteSubject: (term: string, idx: number) => Promise<void>
   onDeleteTerm: (term: string) => void
@@ -34,7 +36,7 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
                 : scholar.status === "Academic Achiever" ? "bg-upb-gold text-white"
                 : "bg-upb-maroon text-white"
               }`}>
-                {scholar.status}
+                {displayScholar(scholar.status)}
               </span>
             )}
             {scholar.disqualified && (
@@ -74,7 +76,7 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
                     <Input
                       value={s.code}
                       className="text-xs"
-                      onChange={(e) => onUpdateSubject(termKey, idx, "code", e.target.value)}
+                      onChange={(e) => onUpdateSubject(termKey, idx, { code: e.target.value })}
                     />
                     {s.excludeFromGWA && (
                       <span className="shrink-0 text-[9px] text-gray-400 border border-gray-300 rounded px-1 py-px whitespace-nowrap">
@@ -89,26 +91,53 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
                     className="text-xs text-center"
                     onChange={(e) => {
                       const v = Math.min(6, Math.max(0, parseFloat(e.target.value) || 0))
-                      onUpdateSubject(termKey, idx, "units", v)
+                      onUpdateSubject(termKey, idx, { units: v })
                     }}
                   />
                 </td>
-                <td className="px-1 py-1" style={{ width: "5rem" }}>
-                  <Input
-                    type="number" value={s.grade} step="0.25" min="1.0" max="5.0"
-                    className="text-xs text-center"
-                    onChange={(e) => {
-                      const v = Math.min(5, Math.max(1, parseFloat(e.target.value) || 1))
-                      onUpdateSubject(termKey, idx, "grade", v)
-                    }}
-                  />
+                <td className="pl-1 pr-3 py-1" style={{ width: "6rem" }}>
+                  <select
+                    value={s.gradeLabel || (s.grade === 0 ? "DRP" : s.grade)}
+                    className={`w-full h-8 rounded-md border px-2 pr-7 py-1 text-xs text-center appearance-none transition-colors focus:outline-none focus:ring-1 cursor-pointer ${
+                      s.gradeLabel
+                        ? "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 focus:ring-amber-300/40 focus:border-amber-400"
+                        : "border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50 focus:ring-upb-green/20 focus:border-upb-green/40"
+                    }`}
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center" }}
+                    onChange={async (e) => {
+                      const val = e.target.value
+                      if (val === "INC" || val === "DRP") {
+                        await onUpdateSubject(termKey, idx, { grade: 0, gradeLabel: val, excludeFromGWA: true })
+                      } else {
+                        await onUpdateSubject(termKey, idx, { grade: parseFloat(val), gradeLabel: "" })
+                      }
+                    }}>
+                    {UP_GRADES.map(g => (
+                      <option key={g} value={g}>{g.toFixed(2)}</option>
+                    ))}
+                    <option value="INC">INC</option>
+                    <option value="DRP">DRP</option>
+                  </select>
                 </td>
-                <td className="pr-2 text-center" style={{ width: "2.5rem" }}>
-                  <button
-                    onClick={() => onDeleteSubject(termKey, idx)}
-                    className="text-gray-300 hover:text-red-500 transition-colors p-1">
-                    <X size={12} />
-                  </button>
+                <td className="pr-1 text-center" style={{ width: "4rem" }}>
+                  <div className="flex items-center justify-center gap-0.5">
+                    <button
+                      title={s.excludeFromGWA ? "Click to include in GWA" : "Click to exclude from GWA"}
+                      disabled={!!s.gradeLabel}
+                      onClick={() => onUpdateSubject(termKey, idx, { excludeFromGWA: !s.excludeFromGWA })}
+                      className={`rounded px-1.5 py-0.5 text-[9px] font-semibold border transition-colors ${
+                        s.excludeFromGWA
+                          ? "border-amber-400 text-amber-600 bg-amber-50 hover:bg-amber-100"
+                          : "border-gray-300 text-gray-400 bg-white hover:border-amber-400 hover:text-amber-500"
+                      } disabled:opacity-40 disabled:cursor-not-allowed`}>
+                      –GWA
+                    </button>
+                    <button
+                      onClick={() => onDeleteSubject(termKey, idx)}
+                      className="text-gray-300 hover:text-red-500 transition-colors p-1">
+                      <X size={12} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
