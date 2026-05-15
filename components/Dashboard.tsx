@@ -53,19 +53,19 @@ export function Dashboard({ current, cumulative, status, termAlreadySaved, onSav
     animation: shouldAnimate ? "gwa-slide-right 0.22s ease-out both" : undefined
   }
 
+  const handleExpand = () => {
+    setShouldAnimate(true)
+    setCollapsed(false)
+  }
+
   if (collapsed) {
     return (
       <div style={{ position: "fixed", right: 0, top: "50%", transform: "translateY(-50%)", zIndex: 2147483647, pointerEvents: "auto" }}>
         <button
-          onClick={() => setCollapsed(false)}
+          onClick={handleExpand}
           style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
           className="inline-flex items-center gap-2 rounded-l-md bg-upb-green px-2 py-3 text-white shadow-md hover:bg-upb-green/90 transition-colors text-xs font-medium">
           GWA Calculator
-          {current.gwa > 0 && (
-            <span className="border border-white/30 rounded px-1 tabular-nums text-[10px]">
-              {current.gwa.toFixed(4)}
-            </span>
-          )}
         </button>
       </div>
     )
