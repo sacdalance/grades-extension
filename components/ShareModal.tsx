@@ -15,8 +15,8 @@ const LIGHT_GREEN = "#16a34a"
 const AMBER = "#d97706"
 
 function gradeColor(grade: number): string {
-  if (grade <= 1.75) return DARK_GREEN
-  if (grade <= 3.00) return LIGHT_GREEN
+  if (grade <= 1.75) return LIGHT_GREEN
+  if (grade <= 3.00) return DARK_GREEN
   return AMBER
 }
 
@@ -29,6 +29,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
   const [showScholar, setShowScholar] = useState(true)
   const [showLatin, setShowLatin] = useState(true)
   const [downloading, setDownloading] = useState(false)
+  const [copying, setCopying] = useState(false)
   const [previewUrl, setPreviewUrl] = useState("")
 
   const term = savedTerms[selectedKey]
@@ -40,7 +41,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
   const buildCanvas = (): HTMLCanvasElement | null => {
     if (!term) return null
 
-    const S = 3
+    const S = 4
     const W = 376 * S
     const PAD = 20 * S
     const FONT = "'Helvetica Neue', Arial, sans-serif"
@@ -99,8 +100,8 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       let rightH = 0
       if (showTermGWA) {
         rightH += tH(7 * S) + 4 * S
-        rightH += tH(10 * S) + 4 * S
-        rightH += tH(32 * S) + 4 * S
+        rightH += tH(8.5 * S) + 4 * S
+        rightH += tH(28 * S) + 4 * S
         rightH += tH(8 * S) + 10 * S
         if (badge) rightH += BADGE_H + 10 * S
         else rightH += 2 * S
@@ -108,15 +109,15 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       if (showTermGWA && showCumGWA) rightH += S + 10 * S
       if (showCumGWA) {
         rightH += tH(7 * S) + 4 * S
-        rightH += tH(26 * S) + 4 * S
+        rightH += tH(28 * S) + 4 * S
         if (cumulative.units > 0) rightH += tH(8 * S) + 8 * S
         if (latinBadge) rightH += 8 * S + BADGE_H
       }
 
       const contentH = Math.max(leftH, rightH)
       const footerSectionH = 8 * S + S + 6 * S + tH(8 * S) + 8 * S
-      const totalH = 20 * S + contentH + footerSectionH
-      const yFoot = Math.round(20 * S + contentH) + 8 * S
+      const yFoot = Math.round(14 * S + contentH) + 14 * S
+      const totalH = yFoot + footerSectionH
 
       canvas.width = W
       canvas.height = Math.ceil(totalH)
@@ -127,8 +128,8 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       ctx.fillStyle = "rgba(0,0,0,0.22)"
       ctx.fillRect(0, 0, LEFT_PANEL_W, yFoot)
 
-      let yL = 20 * S
-      let yR = 20 * S + Math.max(0, (contentH - rightH) / 2)
+      let yL = 14 * S
+      let yR = 14 * S + Math.max(0, (contentH - rightH) / 2)
 
       shadow()
       ctx.font = `500 ${7 * S}px ${FONT}`
@@ -175,13 +176,13 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         ctx.fillStyle = "#fff"
         drawText("TERM GWA", RIGHT_C, yR); yR += tH(7 * S) + 4 * S
 
-        ctx.font = `400 ${10 * S}px ${FONT}`
+        ctx.font = `400 ${8.5 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
-        drawText(selectedKey, RIGHT_C, yR); yR += tH(10 * S) + 4 * S
+        drawText(selectedKey, RIGHT_C, yR); yR += tH(8.5 * S) + 4 * S
 
-        ctx.font = `700 ${32 * S}px ${FONT}`
+        ctx.font = `700 ${28 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
-        drawText(term.gwa.toFixed(4), RIGHT_C, yR); yR += tH(32 * S) + 4 * S
+        drawText(term.gwa.toFixed(4), RIGHT_C, yR); yR += tH(28 * S) + 4 * S
 
         ctx.font = `400 ${8 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
@@ -222,10 +223,10 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         ctx.fillStyle = "#fff"
         drawText("CUMULATIVE GWA", RIGHT_C, yR); yR += tH(7 * S) + 4 * S
 
-        ctx.font = `700 ${26 * S}px ${FONT}`
+        ctx.font = `700 ${28 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
         drawText(cumulative.gwa > 0 ? cumulative.gwa.toFixed(4) : "—", RIGHT_C, yR)
-        yR += tH(26 * S) + 4 * S
+        yR += tH(28 * S) + 4 * S
 
         if (cumulative.units > 0) {
           ctx.font = `400 ${8 * S}px ${FONT}`
@@ -238,7 +239,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
           yR += 8 * S
           const latinLabel = displayLatin(latinBadge).toUpperCase()
           noShadow()
-          ctx.fillStyle = DARK_GREEN
+          ctx.fillStyle = "#18181b"
           ctx.fillRect(RIGHT_X, yR, RIGHT_W, BADGE_H)
           shadow()
           let badgeFs = 7 * S
@@ -264,35 +265,47 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       drawText("AMIS GWA CALCULATOR", W / 2, yFoot + S + 6 * S)
 
     } else if (hasTable) {
-      // ── Full-width table (no right column) ────────────────────────────
+      // ── Dynamic-width table (no right column) ─────────────────────────
       const ROW_H  = 20 * S
       const PILL_W = 46 * S
       const PILL_H = 17 * S
       const TPAD_L = 20 * S
       const TPAD_R = 20 * S
-      const TABLE_W = W - TPAD_L - TPAD_R
       const UNIT_CW = 28 * S
+
+      // Measure subjects to compute tight width
+      ctx.font = `400 ${9 * S}px ${FONT}`
+      let maxSubjW = ctx.measureText("SUBJECT").width
+      for (const s of subjects) {
+        const text = s.code + (s.excludeFromGWA ? " ·" : "")
+        maxSubjW = Math.max(maxSubjW, ctx.measureText(text).width)
+      }
+
+      // Compute width: padding + subject + gap + units + gap + grade pill + padding
+      const CW = Math.max(240 * S, Math.min(W, TPAD_L + maxSubjW + 20 * S + UNIT_CW + 8 * S + PILL_W + TPAD_R))
+      const TABLE_W = CW - TPAD_L - TPAD_R
+
       const colGrade = TPAD_L + TABLE_W - PILL_W / 2
-      const colUnits = colGrade - PILL_W / 2 - 4 * S - UNIT_CW / 2
+      const colUnits = colGrade - PILL_W / 2 - 6 * S - UNIT_CW / 2
       const colSubj  = TPAD_L
 
       let contentH = 0
       contentH += tH(7 * S) + 8 * S
       contentH += subjects.length * ROW_H
 
-      const yFoot = Math.ceil(20 * S + contentH) + 8 * S
+      const yFoot = Math.ceil(14 * S + contentH) + 14 * S
       const totalH = yFoot + S + 6 * S + tH(8 * S) + 8 * S
 
-      canvas.width = W
+      canvas.width = CW
       canvas.height = Math.ceil(totalH)
-      ctx.clearRect(0, 0, W, canvas.height)
+      ctx.clearRect(0, 0, CW, canvas.height)
       ctx.textBaseline = "top"
 
       noShadow()
       ctx.fillStyle = "rgba(0,0,0,0.22)"
-      ctx.fillRect(0, 0, W, yFoot)
+      ctx.fillRect(0, 0, CW, yFoot)
 
-      let y = 20 * S
+      let y = 14 * S
 
       shadow()
       ctx.font = `500 ${7 * S}px ${FONT}`
@@ -335,12 +348,12 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       noShadow()
       ctx.strokeStyle = "rgba(255,255,255,0.12)"
       ctx.lineWidth = S
-      ctx.beginPath(); ctx.moveTo(PAD, yFoot); ctx.lineTo(W - PAD, yFoot); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(PAD, yFoot); ctx.lineTo(CW - PAD, yFoot); ctx.stroke()
       shadow()
       ctx.font = `400 ${8 * S}px ${FONT}`
       ctx.fillStyle = "rgba(255,255,255,0.25)"
       ctx.textAlign = "center"
-      drawText("AMIS GWA CALCULATOR", W / 2, yFoot + S + 6 * S)
+      drawText("AMIS GWA CALCULATOR", CW / 2, yFoot + S + 6 * S)
 
     } else {
       // ── Single-column centered layout ──────────────────────────────────
@@ -351,20 +364,11 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       const mW = (text: string, font: string) => { ctx.font = font; return ctx.measureText(text).width }
       const badgeLabel  = badge      ? displayScholar(badge as any).toUpperCase() : ""
       const latinLabel  = latinBadge ? displayLatin(latinBadge).toUpperCase()     : ""
-      const widths = [
-        showTermGWA && badge      ? mW(badgeLabel,  `700 ${9 * S}px ${FONT}`) + 2 * PAD + 32 * S : 0,
-        showCumGWA  && latinBadge ? mW(latinLabel,  `700 ${9 * S}px ${FONT}`) + 2 * PAD + 32 * S : 0,
-        showTermGWA               ? mW(selectedKey, `400 ${13 * S}px ${FONT}`) + 2 * PAD : 0,
-        showTermGWA               ? mW(term.gwa.toFixed(4), `700 ${46 * S}px ${FONT}`) + 2 * PAD : 0,
-        showCumGWA                ? mW(cumulative.gwa > 0 ? cumulative.gwa.toFixed(4) : "—", `700 ${38 * S}px ${FONT}`) + 2 * PAD : 0,
-      ]
-      const CW = Math.ceil(Math.max(220 * S, ...widths))
-
       let contentH = 0
       if (showTermGWA) {
         contentH += tH(9 * S) + 6 * S
-        contentH += tH(13 * S) + 8 * S
-        contentH += tH(46 * S) + 6 * S
+        contentH += tH(11 * S) + 8 * S
+        contentH += tH(42 * S) + 6 * S
         contentH += tH(10 * S) + 12 * S
         if (badge) contentH += BADGE_H + 8 * S
         else contentH += 8 * S
@@ -372,37 +376,50 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       if (showTermGWA && showCumGWA) contentH += S + 16 * S
       if (showCumGWA) {
         contentH += tH(9 * S) + 6 * S
-        contentH += tH(38 * S) + 6 * S
+        contentH += tH(42 * S) + 6 * S
         if (cumulative.units > 0) contentH += tH(10 * S) + 8 * S
         if (latinBadge) contentH += BADGE_H + 8 * S
       }
+
       const footerH = 8 * S + S + 6 * S + tH(8 * S) + 8 * S
-      const totalH = 20 * S + contentH + footerH
+      const widths = [
+        showTermGWA && badge      ? mW(badgeLabel,  `700 ${9 * S}px ${FONT}`) + 2 * PAD + 32 * S : 0,
+        showCumGWA  && latinBadge ? mW(latinLabel,  `700 ${9 * S}px ${FONT}`) + 2 * PAD + 32 * S : 0,
+        showTermGWA               ? mW(selectedKey, `400 ${11 * S}px ${FONT}`) + 2 * PAD : 0,
+        showTermGWA               ? mW(term.gwa.toFixed(4), `700 ${42 * S}px ${FONT}`) + 2 * PAD : 0,
+        showCumGWA                ? mW(cumulative.gwa > 0 ? cumulative.gwa.toFixed(4) : "—", `700 ${42 * S}px ${FONT}`) + 2 * PAD : 0,
+      ]
+      const CW = Math.ceil(Math.max(220 * S, ...widths))
+      const totalH = Math.max(240 * S, contentH + footerH + 64 * S)
 
       canvas.width = CW
       canvas.height = Math.ceil(totalH)
       ctx.clearRect(0, 0, CW, canvas.height)
       ctx.textBaseline = "top"
 
-      let y = Math.round((canvas.height - footerH - contentH) / 2)
+      // Center the whole block (content + footer) in the canvas
+      let y = Math.round((canvas.height - contentH - footerH) / 2)
+      if (y < 24 * S) y = 24 * S
 
       const CX = CW / 2
       const CPAD = PAD
 
+      noShadow()
+      ctx.textAlign = "center"
+      ctx.fillStyle = "#fff"
+
       if (showTermGWA) {
         shadow()
         ctx.font = `600 ${9 * S}px ${FONT}`
-        ctx.fillStyle = "#fff"
-        ctx.textAlign = "center"
         drawText("TERM GWA", CX, y); y += tH(9 * S) + 6 * S
 
-        ctx.font = `400 ${13 * S}px ${FONT}`
+        ctx.font = `400 ${11 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
-        drawText(selectedKey, CX, y); y += tH(13 * S) + 8 * S
+        drawText(selectedKey, CX, y); y += tH(11 * S) + 8 * S
 
-        ctx.font = `700 ${46 * S}px ${FONT}`
+        ctx.font = `700 ${42 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
-        drawText(term.gwa.toFixed(4), CX, y); y += tH(46 * S) + 6 * S
+        drawText(term.gwa.toFixed(4), CX, y); y += tH(42 * S) + 6 * S
 
         ctx.font = `400 ${10 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
@@ -437,10 +454,10 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         ctx.fillStyle = "#fff"
         drawText("CUMULATIVE GWA", CX, y); y += tH(9 * S) + 6 * S
 
-        ctx.font = `700 ${38 * S}px ${FONT}`
+        ctx.font = `700 ${42 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
         drawText(cumulative.gwa > 0 ? cumulative.gwa.toFixed(4) : "—", CX, y)
-        y += tH(38 * S) + 6 * S
+        y += tH(42 * S) + 6 * S
 
         if (cumulative.units > 0) {
           ctx.font = `400 ${10 * S}px ${FONT}`
@@ -451,28 +468,27 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
 
         if (latinBadge) {
           noShadow()
-          ctx.fillStyle = DARK_GREEN
+          ctx.fillStyle = "#18181b"
           ctx.fillRect(CPAD, y, CW - CPAD * 2, BADGE_H)
           shadow()
           ctx.font = `700 ${9 * S}px ${FONT}`
           ctx.fillStyle = "#fff"
           ctx.textAlign = "center"
           drawText(latinLabel, CX, y + (BADGE_H - tH(9 * S)) / 2)
-          y += BADGE_H + 8 * S
         }
       }
 
-      y += 8 * S
+      // Draw footer relative to centered content
+      const footerY = y + contentH + 8 * S
       noShadow()
       ctx.strokeStyle = "rgba(255,255,255,0.12)"
       ctx.lineWidth = S
-      ctx.beginPath(); ctx.moveTo(CPAD, y); ctx.lineTo(CW - CPAD, y); ctx.stroke()
-      y += S + 6 * S
+      ctx.beginPath(); ctx.moveTo(CPAD, footerY); ctx.lineTo(CW - CPAD, footerY); ctx.stroke()
       shadow()
       ctx.font = `400 ${8 * S}px ${FONT}`
       ctx.fillStyle = "rgba(255,255,255,0.25)"
       ctx.textAlign = "center"
-      drawText("AMIS GWA CALCULATOR", CX, y)
+      drawText("AMIS GWA CALCULATOR", CX, footerY + S + 6 * S)
     }
 
     return canvas
@@ -498,6 +514,24 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       a.click()
       URL.revokeObjectURL(url)
       setDownloading(false)
+    }, "image/png")
+  }
+
+  const handleCopy = () => {
+    const canvas = buildCanvas()
+    if (!canvas) return
+    setCopying(true)
+    canvas.toBlob(async blob => {
+      if (!blob) { setCopying(false); return }
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ [blob.type]: blob })
+        ])
+        setTimeout(() => setCopying(false), 2000)
+      } catch (err) {
+        console.error("Copy failed", err)
+        setCopying(false)
+      }
     }, "image/png")
   }
 
@@ -574,6 +608,9 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
 
         <div className="flex gap-2 justify-end px-5 py-3.5 border-t border-gray-100 shrink-0">
           <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
+          <Button variant="secondary" size="sm" onClick={handleCopy} disabled={!term || copying}>
+            {copying ? "Copied!" : "Copy PNG"}
+          </Button>
           <Button size="sm" onClick={handleDownload} disabled={!term || downloading}>
             {downloading ? "Saving…" : "Save PNG"}
           </Button>
