@@ -28,7 +28,7 @@ export function ConfirmModal({ message, onConfirm, onCancel, confirmLabel = "Con
           <Button variant="secondary" size="sm" onClick={onCancel}>Cancel</Button>
           <Button
             size="sm"
-            className={confirmVariant === "danger" ? "bg-upb-maroon hover:bg-upb-maroon/90 text-white" : ""}
+            variant={confirmVariant === "danger" ? "danger" : "default"}
             onClick={onConfirm}>
             {confirmLabel}
           </Button>

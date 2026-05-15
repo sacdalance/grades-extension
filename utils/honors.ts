@@ -1,10 +1,10 @@
 import type { Subject } from "~types"
 
 // ─── Semester honors (per-term) ──────────────────────────────────────────────
-// Source: UP System rules (University Scholar ≤ 1.45, College Scholar 1.46–1.75, Academic Achiever 1.76–2.00)
+// Source: UP System rules (University Scholar ≤ 1.45, College Scholar 1.46–1.75)
 // Additional conditions (no INC grades) cannot be detected from the grades table.
 
-export type ScholarStatus = "University Scholar" | "College Scholar" | "Academic Achiever" | null
+export type ScholarStatus = "University Scholar" | "College Scholar" | null
 
 export function getScholarStatus(
   gwa: number,
@@ -22,7 +22,6 @@ export function getScholarStatus(
   }
   if (gwa > 0 && gwa <= 1.45) return { status: "University Scholar", disqualified: false }
   if (gwa > 0 && gwa <= 1.75) return { status: "College Scholar", disqualified: false }
-  if (gwa > 0 && gwa <= 2.00) return { status: "Academic Achiever", disqualified: false }
   return { status: null, disqualified: false }
 }
 

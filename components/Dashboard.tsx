@@ -10,7 +10,7 @@ interface Props {
   current: CurrentData
   cumulative: { units: number; gwa: number }
   status: string
-  termAlreadySaved: boolean
+  saveState: "new" | "saved" | "update"
   onSave: () => void
   onManage: () => void
 }
@@ -24,7 +24,7 @@ function StatBox({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function Dashboard({ current, cumulative, status, termAlreadySaved, onSave, onManage }: Props) {
+export function Dashboard({ current, cumulative, status, saveState, onSave, onManage }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [isCollapsing, setIsCollapsing] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
@@ -95,9 +95,16 @@ export function Dashboard({ current, cumulative, status, termAlreadySaved, onSav
 
         {/* Scholar banner */}
         {scholar.status && (
-          <div className={`flex items-center justify-between px-5 py-1.5 ${scholar.status === "University Scholar" ? "bg-upb-green/90" : scholar.status === "Academic Achiever" ? "bg-upb-gold" : "bg-upb-maroon"}`}>
-            <span className="text-[10px] font-semibold text-white uppercase tracking-widest">{displayScholar(scholar.status)}</span>
-            <span className="text-[10px] text-white/60 tabular-nums">{current.gwa.toFixed(4)}</span>
+          <div className={`flex items-center justify-between px-5 py-1.5 border-l-4 ${
+            scholar.status === "University Scholar" ? "bg-green-600/10 border-green-600"
+            : "bg-green-800/10 border-green-800"
+          }`}>
+            <span className={`text-[10px] font-semibold uppercase tracking-widest ${
+              scholar.status === "University Scholar" ? "text-green-700" : "text-green-800"
+            }`}>{displayScholar(scholar.status)}</span>
+            <span className={`text-[10px] tabular-nums opacity-60 ${
+              scholar.status === "University Scholar" ? "text-green-700" : "text-green-800"
+            }`}>{current.gwa.toFixed(4)}</span>
           </div>
         )}
 
@@ -117,20 +124,27 @@ export function Dashboard({ current, cumulative, status, termAlreadySaved, onSav
             )}
 
             <div className="grid grid-cols-2 gap-2">
-              <StatBox label="Units" value={current.units > 0 ? Math.round(current.units).toString() : "—"} />
-              <StatBox label="GWA" value={current.gwa > 0 ? current.gwa.toFixed(4) : "—"} />
+              <StatBox label="Units" value={Math.round(current.units).toString()} />
+              <StatBox label="GWA" value={current.gwa > 0 ? current.gwa.toFixed(4) : "0.0000"} />
             </div>
 
             {current.gwa > 0 && (
               <div className="space-y-2">
-                {!scholar.status && (
-                  <p className="text-xs text-gray-400">
-                    {scholar.disqualified ? scholar.reason : scholar.reason ?? "Not qualified this term"}
-                  </p>
+                {!scholar.status && scholar.reason && (
+                  <p className="text-xs text-gray-400">{scholar.reason}</p>
                 )}
 
-                <Button className="w-full flex-col h-auto py-1.5" onClick={onSave} disabled={termAlreadySaved}>
-                  {termAlreadySaved ? (
+                <Button
+                  variant={saveState === "update" ? "danger" : "default"}
+                  className="w-full flex-col h-auto py-1.5"
+                  onClick={onSave}
+                  disabled={saveState === "saved"}>
+                  {saveState === "update" ? (
+                    <>
+                      <span>Revert Saved Term</span>
+                      <span className="text-[10px] opacity-70 font-normal">{current.term}</span>
+                    </>
+                  ) : saveState === "saved" ? (
                     <>
                       <span>Already Saved</span>
                       <span className="text-[10px] opacity-70 font-normal">{current.term}</span>
@@ -151,9 +165,21 @@ export function Dashboard({ current, cumulative, status, termAlreadySaved, onSav
 
           {/* Latin honors banner */}
           {latinHonor && (
-            <div className="flex items-center justify-between bg-upb-maroon -mx-4 px-5 py-1.5">
-              <span className="text-[10px] font-semibold text-white uppercase tracking-widest">{displayLatin(latinHonor)}</span>
-              <span className="text-[10px] text-white/60 tabular-nums">{cumulative.gwa.toFixed(4)}</span>
+            <div className={`flex items-center justify-between px-5 py-1.5 -mx-4 border-l-4 ${
+              latinHonor === "Summa Cum Laude" ? "bg-green-500/10 border-green-500"
+              : latinHonor === "Magna Cum Laude" ? "bg-green-800/10 border-green-800"
+              : "bg-gray-200 border-gray-500"
+            }`}>
+              <span className={`text-[10px] font-semibold uppercase tracking-widest ${
+                latinHonor === "Summa Cum Laude" ? "text-green-600"
+                : latinHonor === "Magna Cum Laude" ? "text-green-800"
+                : "text-gray-600"
+              }`}>{displayLatin(latinHonor)}</span>
+              <span className={`text-[10px] tabular-nums opacity-60 ${
+                latinHonor === "Summa Cum Laude" ? "text-green-600"
+                : latinHonor === "Magna Cum Laude" ? "text-green-800"
+                : "text-gray-600"
+              }`}>{cumulative.gwa.toFixed(4)}</span>
             </div>
           )}
 
@@ -163,12 +189,12 @@ export function Dashboard({ current, cumulative, status, termAlreadySaved, onSav
               Cumulative GWA
             </p>
             <div className="grid grid-cols-2 gap-2">
-              <StatBox label="Units" value={cumulative.units > 0 ? Math.round(cumulative.units).toString() : "—"} />
-              <StatBox label="GWA" value={cumulative.gwa > 0 ? cumulative.gwa.toFixed(4) : "—"} />
+              <StatBox label="Units" value={Math.round(cumulative.units).toString()} />
+              <StatBox label="GWA" value={cumulative.gwa > 0 ? cumulative.gwa.toFixed(4) : "0.0000"} />
             </div>
             {cumulative.gwa > 0 && !latinHonor && (
               <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
-                <p className="text-xs text-gray-400">No latin honors yet — need GWA ≤ 1.75</p>
+                <p className="text-xs text-gray-400">No latin honors yet. Need cumulative GWA ≤ 1.75</p>
               </div>
             )}
           </div>
@@ -177,15 +203,15 @@ export function Dashboard({ current, cumulative, status, termAlreadySaved, onSav
         <CardFooter className="flex-col gap-1.5 pt-0">
           <Separator className="mb-1" />
           <div className="flex w-full gap-2">
-            <Button className="flex-1" variant="secondary" onClick={onManage}>
+            <Button className="flex-1" onClick={onManage}>
               Manage Data
             </Button>
-            <Button className="flex-1" variant="secondary" onClick={() => setContactOpen(true)}>
+            <Button className="flex-1" onClick={() => setContactOpen(true)}>
               Contact
             </Button>
           </div>
           <p className="text-[10px] text-gray-400 text-center w-full mt-1">
-            INC grades not detected — verify with OUR
+            Unofficial. INC/DRP may not reflect. Verify with OUR.
           </p>
         </CardFooter>
       </Card>

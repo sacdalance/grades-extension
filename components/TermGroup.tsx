@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { getScholarStatus, displayScholar } from "~utils/honors"
 import { Input } from "~components/ui/input"
 import { X, Trash2 } from "lucide-react"
@@ -19,6 +19,13 @@ interface Props {
 export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDeleteSubject, onDeleteTerm }: Props) {
   const scholar = getScholarStatus(term.gwa, term.units, term.subjects)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const pending = useRef(false)
+
+  const guard = async (fn: () => Promise<void>) => {
+    if (pending.current) return
+    pending.current = true
+    try { await fn() } finally { pending.current = false }
+  }
 
   return (
     <>
@@ -27,22 +34,22 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
       <div className="flex items-center gap-2 bg-gray-50 px-4 py-2.5 border-b border-gray-200">
         <div className="flex-1 min-w-0">
           <span className="text-sm font-semibold text-gray-900 block truncate">{termKey}</span>
-          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          <div className="flex items-center gap-2 mt-0.5">
             <span className="text-xs text-gray-400 tabular-nums">{Math.round(term.units)} units</span>
             <span className="text-xs font-semibold text-upb-green tabular-nums">{term.gwa.toFixed(4)} GWA</span>
-            {scholar.status && (
-              <span className={`inline-flex items-center rounded px-1.5 py-px text-[10px] font-medium ${
-                scholar.status === "University Scholar" ? "bg-upb-green text-white"
-                : scholar.status === "Academic Achiever" ? "bg-upb-gold text-white"
-                : "bg-upb-maroon text-white"
-              }`}>
-                {displayScholar(scholar.status)}
-              </span>
-            )}
-            {scholar.disqualified && (
-              <span className="text-[10px] text-gray-400 italic">{scholar.reason}</span>
-            )}
           </div>
+          {scholar.status && (
+            <div className={`mt-1.5 inline-flex border-l-2 pl-2 pr-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+              scholar.status === "University Scholar"
+                ? "border-green-600 bg-green-600/10 text-green-700"
+                : "border-green-800 bg-green-800/10 text-green-800"
+            }`}>
+              {displayScholar(scholar.status)}
+            </div>
+          )}
+          {!scholar.status && scholar.reason && (
+            <span className="mt-0.5 block text-[10px] text-gray-400 italic">{scholar.reason}</span>
+          )}
         </div>
         <button
           onClick={() => setConfirmDelete(true)}
@@ -79,11 +86,6 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
                       className="text-xs"
                       onChange={(e) => onUpdateSubject(termKey, idx, { code: e.target.value })}
                     />
-                    {s.excludeFromGWA && (
-                      <span className="shrink-0 text-[9px] text-gray-400 border border-gray-300 rounded px-1 py-px whitespace-nowrap">
-                        not in GWA
-                      </span>
-                    )}
                   </div>
                 </td>
                 <td className="px-1 py-1" style={{ width: "5rem" }}>
@@ -105,12 +107,12 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
                         : "border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50 focus:ring-upb-green/20 focus:border-upb-green/40"
                     }`}
                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center" }}
-                    onChange={async (e) => {
+                    onChange={(e) => {
                       const val = e.target.value
                       if (val === "INC" || val === "DRP") {
-                        await onUpdateSubject(termKey, idx, { grade: 0, gradeLabel: val, excludeFromGWA: true })
+                        guard(() => onUpdateSubject(termKey, idx, { grade: 0, gradeLabel: val, excludeFromGWA: true }))
                       } else {
-                        await onUpdateSubject(termKey, idx, { grade: parseFloat(val), gradeLabel: "" })
+                        guard(() => onUpdateSubject(termKey, idx, { grade: parseFloat(val), gradeLabel: "" }))
                       }
                     }}>
                     {UP_GRADES.map(g => (
@@ -134,7 +136,7 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
                       {s.excludeFromGWA ? "Excluded" : "Exclude"}
                     </button>
                     <button
-                      onClick={() => onDeleteSubject(termKey, idx)}
+                      onClick={() => guard(() => onDeleteSubject(termKey, idx))}
                       className="text-gray-300 hover:text-red-500 transition-colors p-1">
                       <X size={12} />
                     </button>
@@ -146,7 +148,7 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
         </table>
 
         <button
-          onClick={() => onAddSubject(termKey)}
+          onClick={() => guard(() => onAddSubject(termKey))}
           className="flex w-full items-center gap-1.5 px-4 py-2 text-xs font-medium text-upb-green/60 hover:text-upb-green hover:bg-upb-green/5 border-t border-dashed border-upb-green/20 hover:border-upb-green/40 transition-colors">
           + Add Subject
         </button>

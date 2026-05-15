@@ -12,7 +12,9 @@ const buttonVariants = cva(
         secondary:   "border border-upb-green/30 text-upb-green hover:bg-upb-green/5 hover:border-upb-green/50",
         ghost:       "text-gray-500 hover:text-gray-900 hover:bg-gray-100",
         destructive: "text-red-500 hover:bg-red-50",
-        icon:        "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+        danger:      "bg-gray-900 text-white hover:bg-gray-800",
+        icon:        "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
+        warning:     "bg-upb-gold text-white hover:bg-upb-gold/90"
       },
       size: {
         default: "h-8 px-3 py-1.5",

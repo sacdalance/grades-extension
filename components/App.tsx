@@ -13,35 +13,51 @@ export function App() {
   const [savedTerms, setSavedTerms] = useStorage<SavedTerms>("savedTerms", (v) =>
     v === undefined ? {} : v
   )
-  const savedTermsRef = useRef<SavedTerms>(savedTerms ?? {})
-  savedTermsRef.current = savedTerms ?? {}
+  const terms = savedTerms ?? {}
+  const savedTermsRef = useRef<SavedTerms>(terms)
+  savedTermsRef.current = terms
   const [termOrder, setTermOrder] = useStorage<string[]>("termOrder", (v) =>
     v === undefined ? [] : v
   )
 
   const { data: current, status, setStatus } = useGradeScanner()
-  const cumulative = calcCumulativeGWA(Object.values(savedTerms ?? {}))
+  const cumulative = calcCumulativeGWA(Object.values(terms))
 
-  const persist = async (terms: SavedTerms) => {
-    await setSavedTerms(recalcTerms(terms))
+  const persist = async (next: SavedTerms) => {
+    await setSavedTerms(recalcTerms(next))
   }
+  const savedVersion = terms[current.term]
+  const saveState: "new" | "saved" | "update" = (() => {
+    if (!savedVersion || current.units === 0) return "new"
+    if (Math.round(savedVersion.gwa * 10000) !== Math.round(current.gwa * 10000)) return "update"
+    if (savedVersion.subjects.length !== current.subjects.length) return "update"
+    if (savedVersion.subjects.some((s, i) => {
+      const c = current.subjects[i]
+      return s.code !== c.code || s.grade !== c.grade || s.units !== c.units
+    })) return "update"
+    return "saved"
+  })()
 
-  const termAlreadySaved = current.units > 0 && !!(savedTerms ?? {})[current.term]
-
+  const saving = useRef(false)
   const handleSave = async () => {
-    if (current.units === 0 || termAlreadySaved) return
-    await persist({ ...(savedTerms ?? {}), [current.term]: current })
-    setStatus(`Saved "${current.term}"!`)
+    if (saveState === "saved" || saving.current) return
+    saving.current = true
+    try {
+      await persist({ ...terms, [current.term]: current })
+      setStatus(saveState === "update" ? `Updated "${current.term}"!` : `Saved "${current.term}"!`)
+    } finally {
+      saving.current = false
+    }
   }
 
   const handleCreateTerm = async (name: string): Promise<boolean> => {
-    if ((savedTerms ?? {})[name]) return false
-    await persist({ ...(savedTerms ?? {}), [name]: { term: name, units: 0, gwa: 0, subjects: [] } })
+    if (savedTermsRef.current[name]) return false
+    await persist({ ...savedTermsRef.current, [name]: { term: name, units: 0, gwa: 0, subjects: [] } })
     return true
   }
 
   const handleDeleteTerm = async (termKey: string) => {
-    const updated = { ...(savedTerms ?? {}) }
+    const updated = { ...savedTermsRef.current }
     delete updated[termKey]
     await persist(updated)
     await setTermOrder((termOrder ?? []).filter(k => k !== termKey))
@@ -51,9 +67,14 @@ export function App() {
     await setTermOrder(orderedKeys)
   }
 
-  const handleImport = async (data: SavedTerms) => {
-    await persist(data)
-    await setTermOrder(Object.keys(data))
+  const handleImport = async (data: SavedTerms, importedOrder?: string[]) => {
+    const merged = { ...savedTermsRef.current, ...data }
+    await persist(merged)
+    const existingOrder = termOrder ?? []
+    const mergedKeys = Object.keys(merged)
+    const kept = existingOrder.filter(k => mergedKeys.includes(k))
+    const newKeys = (importedOrder ?? Object.keys(data)).filter(k => !kept.includes(k) && mergedKeys.includes(k))
+    if (newKeys.length > 0) await setTermOrder([...kept, ...newKeys])
   }
 
   const handleReset = async () => {
@@ -98,13 +119,13 @@ export function App() {
         current={current}
         cumulative={cumulative}
         status={status}
-        termAlreadySaved={termAlreadySaved}
+        saveState={saveState}
         onSave={handleSave}
         onManage={() => setModalOpen(true)}
       />
       {modalOpen && (
         <Modal
-          savedTerms={savedTerms ?? {}}
+          savedTerms={terms}
           termOrder={termOrder ?? []}
           onClose={() => setModalOpen(false)}
           onUpdateSubject={handleUpdateSubject}

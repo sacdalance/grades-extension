@@ -5,6 +5,7 @@ import { TermGroup } from "~components/TermGroup"
 import { ConfirmModal } from "~components/ConfirmModal"
 import { ShareModal } from "~components/ShareModal"
 import type { SavedTerms, Subject } from "~types"
+import { parseImport } from "~utils/validation"
 
 interface Props {
   savedTerms: SavedTerms
@@ -16,7 +17,7 @@ interface Props {
   onDeleteTerm: (term: string) => Promise<void>
   onCreateTerm: (name: string) => Promise<boolean>
   onSaveOrder: (keys: string[]) => Promise<void>
-  onImport: (data: SavedTerms) => Promise<void>
+  onImport: (data: SavedTerms, termOrder?: string[]) => Promise<void>
   onReset: () => Promise<void>
 }
 
@@ -45,7 +46,12 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
   const [confirmReset, setConfirmReset] = useState(false)
   const [confirmCreate, setConfirmCreate] = useState(false)
   const [confirmExport, setConfirmExport] = useState(false)
-  const [confirmImport, setConfirmImport] = useState(false)
+  const [pendingImport, setPendingImport] = useState<{
+    data: SavedTerms
+    termOrder?: string[]
+    conflicts: { key: string; oldGwa: number; newGwa: number }[]
+    newCount: number
+  } | null>(null)
   const [shareOpen, setShareOpen] = useState(false)
   const [orderedKeys, setOrderedKeys] = useState<string[]>(() => resolveOrder(termOrder, savedTerms))
 
@@ -122,7 +128,7 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
   }
 
   const handleExport = () => {
-    const json = JSON.stringify(savedTerms, null, 2)
+    const json = JSON.stringify({ terms: savedTerms, termOrder: orderedKeys }, null, 2)
     const blob = new Blob([json], { type: "application/json" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
@@ -140,20 +146,31 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
       return
     }
     const reader = new FileReader()
-    reader.onload = async (ev) => {
+    reader.onload = (ev) => {
       try {
-        const data = JSON.parse(ev.target?.result as string) as SavedTerms
-        if (typeof data !== "object" || Array.isArray(data)) throw new Error()
-        await onImport(data)
-        setSuccess("Imported successfully.")
+        const parsed = parseImport(JSON.parse(ev.target?.result as string))
+        if (!parsed) throw new Error()
+        const { terms: data, termOrder: importedOrder } = parsed
+        const conflicts = Object.keys(data)
+          .filter(k => !!savedTerms[k])
+          .map(k => ({ key: k, oldGwa: savedTerms[k].gwa, newGwa: data[k].gwa }))
+        const newCount = Object.keys(data).filter(k => !savedTerms[k]).length
+        setPendingImport({ data, termOrder: importedOrder, conflicts, newCount })
         setError("")
-        setTimeout(() => setSuccess(""), 3000)
       } catch {
-        setError("Invalid file. Must be a GWA grades JSON export.")
+        setError("Invalid file. Must be a valid GWA grades JSON export.")
       }
     }
     reader.readAsText(file)
     e.target.value = ""
+  }
+
+  const doImport = async () => {
+    if (!pendingImport) return
+    await onImport(pendingImport.data, pendingImport.termOrder)
+    setPendingImport(null)
+    setSuccess("Imported successfully.")
+    setTimeout(() => setSuccess(""), 3000)
   }
 
   return (
@@ -192,13 +209,14 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
           ) : (
             orderedKeys.filter(key => !!savedTerms[key]).map((key, idx, visible) => (
               <div key={key} data-term-key={key} className="flex gap-2 items-start">
-                <div className="flex flex-col gap-1 pt-2.5 shrink-0">
+                <div className="flex flex-col items-center gap-0.5 pt-2.5 shrink-0">
                   <button
                     onClick={() => move(idx, -1)}
                     disabled={idx === 0}
                     className="text-gray-300 hover:text-gray-500 disabled:opacity-20 disabled:cursor-default text-xs leading-none px-0.5">
                     ▲
                   </button>
+                  <span className="text-[10px] font-medium text-gray-400 tabular-nums leading-none">{idx + 1}</span>
                   <button
                     onClick={() => move(idx, 1)}
                     disabled={idx === visible.length - 1}
@@ -223,11 +241,11 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
 
         {/* Actions row */}
         <div className="border-t border-gray-200 px-5 pt-3 pb-0 flex gap-2 flex-wrap">
-          <Button variant="secondary" size="sm" onClick={() => setConfirmExport(true)} disabled={orderedKeys.length === 0}>Export JSON</Button>
-          <Button variant="secondary" size="sm" onClick={() => setConfirmImport(true)}>Import JSON</Button>
-          <Button variant="secondary" size="sm" onClick={() => setShareOpen(true)} disabled={orderedKeys.length === 0}>Share</Button>
+          <Button size="sm" onClick={() => setConfirmExport(true)} disabled={orderedKeys.length === 0}>Export JSON</Button>
+          <Button size="sm" onClick={() => importRef.current?.click()}>Import JSON</Button>
+          <Button size="sm" onClick={() => setShareOpen(true)} disabled={orderedKeys.length === 0}>Share</Button>
           <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImportFile} />
-          <Button size="sm" className="ml-auto bg-upb-maroon hover:bg-upb-maroon/90 text-white disabled:opacity-40 disabled:cursor-not-allowed" onClick={handleReset} disabled={orderedKeys.length === 0}>Reset All</Button>
+          <Button variant="danger" size="sm" className="ml-auto" onClick={handleReset} disabled={orderedKeys.length === 0}>Reset All</Button>
         </div>
 
         {/* Add term */}
@@ -258,6 +276,55 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
       </div>
     </div>
 
+    {pendingImport && (
+      <div
+        className="pointer-events-auto flex items-center justify-center"
+        style={{ position: "fixed", inset: 0, zIndex: 2147483648, background: "rgba(0,0,0,0.35)", animation: "gwa-fade 0.15s ease-out both" }}
+        onClick={(e) => e.target === e.currentTarget && setPendingImport(null)}>
+        <div
+          className="flex flex-col bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden"
+          style={{ width: "min(28rem, 92vw)", maxHeight: "72vh", animation: "gwa-slide-up 0.2s ease-out both" }}>
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 shrink-0">
+            <h2 className="text-sm font-semibold text-gray-900">Review Import</h2>
+            <Button variant="icon" size="icon" onClick={() => setPendingImport(null)} className="text-lg leading-none">×</Button>
+          </div>
+          <div className="px-5 py-2.5 bg-amber-50 border-b border-amber-100 flex flex-wrap gap-x-4 gap-y-0.5 shrink-0">
+            {pendingImport.conflicts.length > 0 && (
+              <span className="text-xs text-amber-700">
+                <span className="font-semibold">{pendingImport.conflicts.length}</span> term{pendingImport.conflicts.length !== 1 ? "s" : ""} will be overwritten
+              </span>
+            )}
+            {pendingImport.newCount > 0 && (
+              <span className="text-xs text-upb-green">
+                <span className="font-semibold">{pendingImport.newCount}</span> new term{pendingImport.newCount !== 1 ? "s" : ""} added
+              </span>
+            )}
+            {pendingImport.conflicts.length === 0 && pendingImport.newCount === 0 && (
+              <span className="text-xs text-gray-400">No changes.</span>
+            )}
+          </div>
+          <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+            {pendingImport.conflicts.length === 0 ? (
+              <p className="py-10 text-center text-sm text-gray-400">No conflicts. Safe to import.</p>
+            ) : (
+              pendingImport.conflicts.map(c => (
+                <div key={c.key} className="flex items-center gap-3 px-5 py-2.5 min-w-0">
+                  <span className="flex-1 truncate text-xs text-gray-800 min-w-0">{c.key}</span>
+                  <span className="shrink-0 tabular-nums text-[11px] text-gray-400">{c.oldGwa.toFixed(4)}</span>
+                  <span className="shrink-0 text-[11px] text-amber-500">→</span>
+                  <span className="shrink-0 tabular-nums text-[11px] font-semibold text-upb-green">{c.newGwa.toFixed(4)}</span>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="border-t border-gray-200 px-5 py-3 flex gap-2 shrink-0">
+            <Button size="sm" variant="secondary" className="flex-1" onClick={() => setPendingImport(null)}>Cancel</Button>
+            <Button size="sm" className="flex-1" onClick={doImport}>Confirm Import</Button>
+          </div>
+        </div>
+      </div>
+    )}
+
     {shareOpen && (
       <ShareModal
         savedTerms={savedTerms}
@@ -272,16 +339,6 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
         confirmLabel="Export"
         onConfirm={() => { setConfirmExport(false); handleExport() }}
         onCancel={() => setConfirmExport(false)}
-      />
-    )}
-
-    {confirmImport && (
-      <ConfirmModal
-        message="Import a JSON file? This will replace all current saved data."
-        confirmLabel="Import"
-        confirmVariant="danger"
-        onConfirm={() => { setConfirmImport(false); importRef.current?.click() }}
-        onCancel={() => setConfirmImport(false)}
       />
     )}
 

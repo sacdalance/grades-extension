@@ -10,14 +10,14 @@ interface Props {
   onClose: () => void
 }
 
-const DARK_GREEN = "#15803d"
-const LIGHT_GREEN = "#16a34a"
-const AMBER = "#d97706"
+const GREEN_LIGHT = "#16a34a"
+const GREEN_DARK  = "#166534"
+const BLACK = "#000000"
 
 function gradeColor(grade: number): string {
-  if (grade <= 1.75) return LIGHT_GREEN
-  if (grade <= 3.00) return DARK_GREEN
-  return AMBER
+  if (grade <= 1.75) return GREEN_LIGHT
+  if (grade <= 3.00) return GREEN_DARK
+  return BLACK
 }
 
 export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
@@ -155,11 +155,11 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
 
         ctx.font = `400 ${9 * S}px ${FONT}`
         ctx.textAlign = "left"
-        ctx.fillStyle = excluded ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.85)"
+        ctx.fillStyle = excluded ? "rgba(255,255,255,0.3)" : "#fff"
         drawText(s.code + (excluded ? " ·" : ""), colSubj, textY)
 
         ctx.textAlign = "center"
-        ctx.fillStyle = "rgba(255,255,255,0.45)"
+        ctx.fillStyle = excluded ? "rgba(255,255,255,0.3)" : "#fff"
         drawText(String(s.units), colUnits, textY)
 
         ctx.font = `600 ${9 * S}px ${FONT}`
@@ -191,7 +191,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         if (badge) {
           const badgeLabel = displayScholar(badge as any).toUpperCase()
           noShadow()
-          ctx.fillStyle = badge === "Academic Achiever" ? AMBER : DARK_GREEN
+          ctx.fillStyle = badge === "University Scholar" ? GREEN_LIGHT : GREEN_DARK
           ctx.fillRect(RIGHT_X, yR, RIGHT_W, BADGE_H)
           shadow()
           let badgeFs = 7 * S
@@ -239,7 +239,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
           yR += 8 * S
           const latinLabel = displayLatin(latinBadge).toUpperCase()
           noShadow()
-          ctx.fillStyle = "#18181b"
+          ctx.fillStyle = latinBadge === "Summa Cum Laude" ? GREEN_LIGHT : latinBadge === "Magna Cum Laude" ? GREEN_DARK : BLACK
           ctx.fillRect(RIGHT_X, yR, RIGHT_W, BADGE_H)
           shadow()
           let badgeFs = 7 * S
@@ -331,11 +331,11 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
 
         ctx.font = `400 ${9 * S}px ${FONT}`
         ctx.textAlign = "left"
-        ctx.fillStyle = excluded ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.85)"
+        ctx.fillStyle = excluded ? "rgba(255,255,255,0.3)" : "#fff"
         drawText(s.code + (excluded ? " ·" : ""), colSubj, textY)
 
         ctx.textAlign = "center"
-        ctx.fillStyle = "rgba(255,255,255,0.45)"
+        ctx.fillStyle = excluded ? "rgba(255,255,255,0.3)" : "#fff"
         drawText(String(s.units), colUnits, textY)
 
         ctx.font = `600 ${9 * S}px ${FONT}`
@@ -427,7 +427,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
 
         if (badge) {
           noShadow()
-          ctx.fillStyle = badge === "Academic Achiever" ? AMBER : DARK_GREEN
+          ctx.fillStyle = badge === "University Scholar" ? GREEN_LIGHT : GREEN_DARK
           ctx.fillRect(CPAD, y, CW - CPAD * 2, BADGE_H)
           shadow()
           ctx.font = `700 ${9 * S}px ${FONT}`
@@ -468,7 +468,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
 
         if (latinBadge) {
           noShadow()
-          ctx.fillStyle = "#18181b"
+          ctx.fillStyle = latinBadge === "Summa Cum Laude" ? GREEN_LIGHT : latinBadge === "Magna Cum Laude" ? GREEN_DARK : BLACK
           ctx.fillRect(CPAD, y, CW - CPAD * 2, BADGE_H)
           shadow()
           ctx.font = `700 ${9 * S}px ${FONT}`
@@ -556,7 +556,8 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
             <select
               value={selectedKey}
               onChange={(e) => setSelectedKey(e.target.value)}
-              className="w-full h-8 rounded-md border border-gray-200 bg-white px-2 py-1 text-sm text-gray-800 transition-colors hover:border-gray-300 focus:border-upb-green/40 focus:outline-none focus:ring-1 focus:ring-upb-green/20 cursor-pointer">
+              className="w-full h-8 rounded-md border border-gray-200 bg-white px-2 pr-7 py-1 text-sm text-gray-800 appearance-none transition-colors hover:border-gray-300 hover:bg-gray-50 focus:border-upb-green/40 focus:outline-none focus:ring-1 focus:ring-upb-green/20 cursor-pointer"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center" }}>
               {keys.map(k => <option key={k} value={k}>{k}</option>)}
             </select>
           </div>
@@ -570,24 +571,34 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
               <input type="checkbox" checked={showTermGWA} onChange={(e) => setShowTermGWA(e.target.checked)} className="accent-upb-green" />
               <span className="text-xs text-gray-700">Show term GWA</span>
             </label>
-            <label className={`flex items-center gap-3 px-3 py-2.5 transition-colors ${showTermGWA ? "cursor-pointer hover:bg-gray-50" : "opacity-40 cursor-not-allowed"}`}>
-              <input type="checkbox" checked={showScholar} onChange={(e) => setShowScholar(e.target.checked)} className="accent-upb-green" disabled={!showTermGWA} />
-              <span className="text-xs text-gray-700 flex-1">Show scholar status badge</span>
-              {showTermGWA && showScholar && !scholar?.status && (
-                <span className="text-[10px] text-gray-400 italic">not qualified</span>
-              )}
-            </label>
+            {(() => {
+              const scholarDisabled = !showTermGWA || !scholar?.status
+              return (
+                <label className={`flex items-center gap-3 pl-8 pr-3 py-2.5 transition-colors ${scholarDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-gray-50"}`}>
+                  <input type="checkbox" checked={showScholar} onChange={(e) => setShowScholar(e.target.checked)} className="accent-upb-green" disabled={scholarDisabled} />
+                  <span className="text-xs text-gray-700 flex-1">Show scholar status badge</span>
+                  {showTermGWA && !scholar?.status && (
+                    <span className="text-[10px] text-gray-400 italic">not qualified</span>
+                  )}
+                </label>
+              )
+            })()}
             <label className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors">
               <input type="checkbox" checked={showCumGWA} onChange={(e) => setShowCumGWA(e.target.checked)} className="accent-upb-green" />
               <span className="text-xs text-gray-700">Show cumulative GWA</span>
             </label>
-            <label className={`flex items-center gap-3 px-3 py-2.5 transition-colors ${showCumGWA ? "cursor-pointer hover:bg-gray-50" : "opacity-40 cursor-not-allowed"}`}>
-              <input type="checkbox" checked={showLatin} onChange={(e) => setShowLatin(e.target.checked)} className="accent-upb-green" disabled={!showCumGWA} />
-              <span className="text-xs text-gray-700 flex-1">Show latin honor estimate</span>
-              {showCumGWA && showLatin && !latinHonor && (
-                <span className="text-[10px] text-gray-400 italic">not qualified</span>
-              )}
-            </label>
+            {(() => {
+              const latinDisabled = !showCumGWA || !latinHonor
+              return (
+                <label className={`flex items-center gap-3 pl-8 pr-3 py-2.5 transition-colors ${latinDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-gray-50"}`}>
+                  <input type="checkbox" checked={showLatin} onChange={(e) => setShowLatin(e.target.checked)} className="accent-upb-green" disabled={latinDisabled} />
+                  <span className="text-xs text-gray-700 flex-1">Show latin honor estimate</span>
+                  {showCumGWA && !latinHonor && (
+                    <span className="text-[10px] text-gray-400 italic">not qualified</span>
+                  )}
+                </label>
+              )
+            })()}
           </div>
 
           {/* Preview — rendered from the same canvas as the export */}
@@ -603,7 +614,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
             <p className="text-sm text-gray-400 text-center py-4">No term selected.</p>
           )}
 
-          <p className="text-[10px] text-gray-400">Preview is the exact PNG that will be saved — transparent background for overlaying on photos.</p>
+          <p className="text-[10px] text-gray-400">Unofficial. For reference only. Verify with OUR.</p>
         </div>
 
         <div className="flex gap-2 justify-end px-5 py-3.5 border-t border-gray-100 shrink-0">
