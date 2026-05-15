@@ -238,6 +238,7 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
               className="flex-1 border border-gray-200 bg-gray-50 hover:bg-white focus:bg-white"
               placeholder="e.g. First Semester 2024-2025"
               value={newTerm}
+              maxLength={30}
               onChange={(e) => setNewTerm(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
             />

@@ -20,6 +20,11 @@
   to   { transform: translateX(0);      opacity: 1; }
 }
 
+@keyframes gwa-slide-out {
+  from { transform: translateX(0);      opacity: 1; }
+  to   { transform: translateX(0.6rem); opacity: 0; }
+}
+
 @keyframes gwa-fade {
   from { opacity: 0; }
   to   { opacity: 1; }

@@ -75,6 +75,7 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
                   <div className="flex items-center gap-1.5">
                     <Input
                       value={s.code}
+                      maxLength={15}
                       className="text-xs"
                       onChange={(e) => onUpdateSubject(termKey, idx, { code: e.target.value })}
                     />

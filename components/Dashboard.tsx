@@ -26,6 +26,7 @@ function StatBox({ label, value }: { label: string; value: string }) {
 
 export function Dashboard({ current, cumulative, status, termAlreadySaved, onSave, onManage }: Props) {
   const [collapsed, setCollapsed] = useState(false)
+  const [isCollapsing, setIsCollapsing] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
   const [shouldAnimate, setShouldAnimate] = useState(true)
 
@@ -39,8 +40,12 @@ export function Dashboard({ current, cumulative, status, termAlreadySaved, onSav
   }, [shouldAnimate])
 
   const handleCollapse = () => {
-    setShouldAnimate(true)
-    setCollapsed(true)
+    setIsCollapsing(true)
+    setTimeout(() => {
+      setCollapsed(true)
+      setIsCollapsing(false)
+      setShouldAnimate(false)
+    }, 200)
   }
 
   const WIDGET_STYLE: React.CSSProperties = {
@@ -50,7 +55,9 @@ export function Dashboard({ current, cumulative, status, termAlreadySaved, onSav
     zIndex: 2147483647,
     width: "min(17rem, calc(100vw - 1rem))",
     pointerEvents: "auto",
-    animation: shouldAnimate ? "gwa-slide-right 0.22s ease-out both" : undefined
+    animation: isCollapsing 
+      ? "gwa-slide-out 0.2s ease-in both"
+      : shouldAnimate ? "gwa-slide-right 0.22s ease-out both" : undefined
   }
 
   const handleExpand = () => {
@@ -78,7 +85,11 @@ export function Dashboard({ current, cumulative, status, termAlreadySaved, onSav
         <CardHeader className="bg-upb-green px-5 py-3">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-white text-sm tracking-wide">AMIS GWA Calculator</CardTitle>
-            <Button variant="icon" size="icon" onClick={handleCollapse} className="text-white/70 hover:text-white">×</Button>
+            <button 
+              onClick={handleCollapse} 
+              className="h-6 w-6 flex items-center justify-center rounded text-white/70 hover:text-white hover:bg-white/20 transition-colors text-lg leading-none">
+              ×
+            </button>
           </div>
         </CardHeader>
 
