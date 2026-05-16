@@ -31,6 +31,13 @@ export function TermsModal({ onClose }: Props) {
             </p>
           </div>
 
+          <div className="pl-3 border-l-2 border-gray-200">
+            <p className="text-[10px] font-semibold text-upb-maroon uppercase tracking-widest mb-1">Privacy Policy</p>
+            <p>
+              This extension does not collect, transmit, or share any personal data. All data is stored locally on your device and never leaves it. The following sections detail how your data is handled.
+            </p>
+          </div>
+
           <div>
             <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">1. No Data Collection</p>
             <p>
@@ -49,6 +56,13 @@ export function TermsModal({ onClose }: Props) {
             <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">3. Read-Only Page Access</p>
             <p>
               The extension reads grade information displayed on the AMIS portal solely to compute your GWA on-screen. It does not modify, submit, or interact with any form or system on the portal. Your AMIS credentials and active session are never accessed or stored by this extension.
+            </p>
+          </div>
+
+          <div className="pl-3 border-l-2 border-gray-200">
+            <p className="text-[10px] font-semibold text-upb-maroon uppercase tracking-widest mb-1">Terms of Use</p>
+            <p>
+              By using this extension, you agree to the following terms.
             </p>
           </div>
 
