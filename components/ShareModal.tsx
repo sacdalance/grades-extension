@@ -32,7 +32,6 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
   const [downloading, setDownloading] = useState(false)
   const [copying, setCopying] = useState(false)
   const [previewUrl, setPreviewUrl] = useState("")
-
   const term = savedTerms[selectedKey]
   const cumulative = calcCumulativeGWA(Object.values(savedTerms))
   const scholar = term ? getScholarStatus(term.gwa, term.units, term.subjects) : null
@@ -45,7 +44,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
     const S = 4
     const W = 376 * S
     const PAD = 20 * S
-    const FONT = "'Helvetica Neue', Arial, sans-serif"
+    const FONT = "Inter, 'Helvetica Neue', Arial, sans-serif"
     const subjects = includeTable ? term.subjects : []
     const badge = showScholar && scholar?.status ? scholar.status : null
     const latinBadge = showLatin && latinHonor ? latinHonor : null
@@ -100,7 +99,6 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       let rightH = 0
       if (showTermGWA) {
         rightH += tH(7 * S) + 4 * S
-        rightH += tH(8.5 * S) + 4 * S
         rightH += tH(28 * S) + 4 * S
         rightH += tH(8 * S) + 10 * S
         if (badge) rightH += BADGE_H + 10 * S
@@ -199,10 +197,6 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         ctx.fillStyle = "#fff"
         drawText("TERM GWA", RIGHT_C, yR); yR += tH(7 * S) + 4 * S
 
-        ctx.font = `400 ${8.5 * S}px ${FONT}`
-        ctx.fillStyle = "#fff"
-        drawText(selectedKey, RIGHT_C, yR); yR += tH(8.5 * S) + 4 * S
-
         ctx.font = `700 ${28 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
         drawText(fmt(term.gwa), RIGHT_C, yR); yR += tH(28 * S) + 4 * S
@@ -232,7 +226,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
           bX.globalCompositeOperation = "destination-out"
           bX.fillStyle = "rgba(0,0,0,1)"
           bX.strokeStyle = "rgba(0,0,0,1)"
-          bX.lineWidth = S * 0.6
+          bX.lineWidth = S * 0.35
           bX.textAlign = "center"
           const bTY = (BADGE_H - tH(badgeFs)) / 2
           bX.strokeText(badgeLabel, RIGHT_W / 2, bTY)
@@ -293,7 +287,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
           lX.globalCompositeOperation = "destination-out"
           lX.fillStyle = "rgba(0,0,0,1)"
           lX.strokeStyle = "rgba(0,0,0,1)"
-          lX.lineWidth = S * 0.6
+          lX.lineWidth = S * 0.35
           lX.textAlign = "center"
           const lTY = (BADGE_H - tH(badgeFs)) / 2
           lX.strokeText(latinLabel, RIGHT_W / 2, lTY)
