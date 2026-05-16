@@ -11,7 +11,7 @@ interface Props {
 }
 
 const GREEN_LIGHT = "#16a34a"
-const GREEN_DARK  = "#166534"
+const GREEN_DARK = "#166534"
 const BLACK = "#000000"
 
 function gradeColor(grade: number): string {
@@ -28,6 +28,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
   const [showCumGWA, setShowCumGWA] = useState(true)
   const [showScholar, setShowScholar] = useState(true)
   const [showLatin, setShowLatin] = useState(true)
+  const [redactGWA, setRedactGWA] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [copying, setCopying] = useState(false)
   const [previewUrl, setPreviewUrl] = useState("")
@@ -48,6 +49,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
     const subjects = includeTable ? term.subjects : []
     const badge = showScholar && scholar?.status ? scholar.status : null
     const latinBadge = showLatin && latinHonor ? latinHonor : null
+    const fmt = (gwa: number) => redactGWA ? `${Math.floor(gwa)}.xx` : gwa.toFixed(4)
     const hasRightCol = showTermGWA || showCumGWA
     const hasTable = subjects.length > 0
 
@@ -61,11 +63,6 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       return m.actualBoundingBoxAscent + m.actualBoundingBoxDescent
     }
 
-    const shadow = () => {
-      ctx.shadowColor = "rgba(0,0,0,0.8)"
-      ctx.shadowBlur = 3 * S
-      ctx.shadowOffsetY = 1 * S
-    }
     const noShadow = () => {
       ctx.shadowColor = "transparent"
       ctx.shadowBlur = 0
@@ -75,27 +72,30 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
 
     if (hasTable && hasRightCol) {
       // ── Two-column layout ──────────────────────────────────────────────
-      const BADGE_H = 20 * S
-      const ROW_H   = 20 * S
-      const PILL_W  = 46 * S
-      const PILL_H  = 17 * S
+      const BADGE_H = 14 * S
+      const ROW_H = 20 * S
+      const PILL_W = 46 * S
+      const PILL_H = 17 * S
 
       const LEFT_PANEL_W = Math.round(W * 0.55)
-      const RIGHT_X      = LEFT_PANEL_W + 8 * S
-      const RIGHT_W      = W - RIGHT_X - PAD
-      const RIGHT_C      = RIGHT_X + RIGHT_W / 2
+      const RPAD = 14 * S
+      const RIGHT_X = LEFT_PANEL_W + RPAD
+      const RIGHT_W = W - RIGHT_X - RPAD
+      const RIGHT_C = LEFT_PANEL_W + (W - LEFT_PANEL_W) / 2
 
-      const TPAD_L  = 16 * S
-      const TPAD_R  = 12 * S
+      const TPAD_L = 16 * S
+      const TPAD_R = 12 * S
       const TABLE_W = LEFT_PANEL_W - TPAD_L - TPAD_R
       const UNIT_CW = 28 * S
       const colGrade = TPAD_L + TABLE_W - PILL_W / 2
       const colUnits = colGrade - PILL_W / 2 - 4 * S - UNIT_CW / 2
-      const colSubj  = TPAD_L
+      const colSubj = TPAD_L
 
       let leftH = 0
-      leftH += tH(7 * S) + 8 * S
+      leftH += tH(9 * S) + 14 * S  // term name
+      leftH += tH(7 * S) + 8 * S   // header
       leftH += subjects.length * ROW_H
+      leftH += 10 * S + tH(6 * S)  // disclaimer
 
       let rightH = 0
       if (showTermGWA) {
@@ -115,25 +115,35 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       }
 
       const contentH = Math.max(leftH, rightH)
-      const footerSectionH = 8 * S + S + 6 * S + tH(8 * S) + 8 * S
       const yFoot = Math.round(14 * S + contentH) + 14 * S
-      const totalH = yFoot + footerSectionH
 
       canvas.width = W
-      canvas.height = Math.ceil(totalH)
+      canvas.height = Math.ceil(yFoot)
       ctx.clearRect(0, 0, W, canvas.height)
       ctx.textBaseline = "top"
 
       noShadow()
-      ctx.fillStyle = "rgba(0,0,0,0.22)"
-      ctx.fillRect(0, 0, LEFT_PANEL_W, yFoot)
+      // White left panel
+      ctx.fillStyle = "#ffffff"
+      ctx.fillRect(0, 0, LEFT_PANEL_W, canvas.height)
+      ctx.fillStyle = "rgba(0,0,0,0.35)"
+      ctx.fillRect(LEFT_PANEL_W, 0, W - LEFT_PANEL_W, canvas.height)
 
       let yL = 14 * S
-      let yR = 14 * S + Math.max(0, (contentH - rightH) / 2)
+      const yRBase = Math.round((yFoot - rightH) / 2)
+      let yR = Math.max(14 * S, yRBase)
 
-      shadow()
+      // ── Term name ──────────────────────────────────────────────────────
+      noShadow()
+      ctx.font = `700 ${9 * S}px ${FONT}`
+      ctx.fillStyle = "rgba(0,0,0,0.85)"
+      ctx.textAlign = "left"
+      drawText(selectedKey, colSubj, yL)
+      yL += tH(9 * S) + 14 * S
+
+      // ── Table header ───────────────────────────────────────────────────
       ctx.font = `500 ${7 * S}px ${FONT}`
-      ctx.fillStyle = "rgba(255,255,255,0.45)"
+      ctx.fillStyle = "rgba(0,0,0,0.80)"
       ctx.textAlign = "left"
       drawText("SUBJECT", colSubj, yL)
       ctx.textAlign = "center"
@@ -141,9 +151,15 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       drawText("GRADE", colGrade, yL)
       yL += tH(7 * S) + 8 * S
 
+      // Header bottom border
+      ctx.strokeStyle = "rgba(0,0,0,0.10)"
+      ctx.lineWidth = S
+      ctx.beginPath(); ctx.moveTo(0, yL - 4 * S); ctx.lineTo(LEFT_PANEL_W, yL - 4 * S); ctx.stroke()
+
+      // ── Subject rows ───────────────────────────────────────────────────
       for (const s of subjects) {
         const excluded = !!s.excludeFromGWA
-        const gradeBg = excluded ? "rgba(255,255,255,0.18)" : gradeColor(s.grade)
+        const gradeBg = excluded ? "rgba(0,0,0,0.07)" : gradeColor(s.grade)
         const rowTH = tH(9 * S)
         const textY = Math.round(yL + (ROW_H - rowTH) / 2)
         const pillTop = Math.round(yL + (ROW_H - PILL_H) / 2)
@@ -151,26 +167,33 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         noShadow()
         ctx.fillStyle = gradeBg
         ctx.fillRect(colGrade - PILL_W / 2, pillTop, PILL_W, PILL_H)
-        shadow()
 
-        ctx.font = `400 ${9 * S}px ${FONT}`
+        ctx.font = `600 ${9 * S}px ${FONT}`
         ctx.textAlign = "left"
-        ctx.fillStyle = excluded ? "rgba(255,255,255,0.3)" : "#fff"
+        ctx.fillStyle = excluded ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.85)"
         drawText(s.code + (excluded ? " ·" : ""), colSubj, textY)
 
         ctx.textAlign = "center"
-        ctx.fillStyle = excluded ? "rgba(255,255,255,0.3)" : "#fff"
+        ctx.fillStyle = excluded ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.85)"
         drawText(String(s.units), colUnits, textY)
 
         ctx.font = `600 ${9 * S}px ${FONT}`
-        ctx.fillStyle = excluded ? "rgba(255,255,255,0.5)" : "#fff"
+        ctx.fillStyle = excluded ? "rgba(0,0,0,0.25)" : "#fff"
         drawText(s.gradeLabel || (s.grade === 0 ? "—" : s.grade.toFixed(2)), colGrade, textY)
 
         yL += ROW_H
       }
 
+      // Disclaimer
+      noShadow()
+      ctx.font = `400 ${6 * S}px ${FONT}`
+      ctx.fillStyle = "rgba(0,0,0,0.30)"
+      ctx.textAlign = "left"
+      drawText("Unofficial. Verify with OUR for validity.", colSubj, yL + 10 * S)
+
+      // ── Right panel (GWA) ──────────────────────────────────────────────
       if (showTermGWA) {
-        shadow()
+        noShadow()
         ctx.textAlign = "center"
         ctx.font = `600 ${7 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
@@ -182,27 +205,39 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
 
         ctx.font = `700 ${28 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
-        drawText(term.gwa.toFixed(4), RIGHT_C, yR); yR += tH(28 * S) + 4 * S
+        drawText(fmt(term.gwa), RIGHT_C, yR); yR += tH(28 * S) + 4 * S
 
-        ctx.font = `400 ${8 * S}px ${FONT}`
+        ctx.font = `500 ${7 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
-        drawText(`${Math.round(term.units)} units`, RIGHT_C, yR); yR += tH(8 * S) + 10 * S
+        drawText(`${Math.round(term.units)} UNITS`, RIGHT_C, yR); yR += tH(7 * S) + 10 * S
 
         if (badge) {
           const badgeLabel = displayScholar(badge as any).toUpperCase()
-          noShadow()
-          ctx.fillStyle = badge === "University Scholar" ? GREEN_LIGHT : GREEN_DARK
-          ctx.fillRect(RIGHT_X, yR, RIGHT_W, BADGE_H)
-          shadow()
-          let badgeFs = 7 * S
+          let badgeFs = 11 * S
           ctx.font = `700 ${badgeFs}px ${FONT}`
-          while (ctx.measureText(badgeLabel).width > RIGHT_W - 12 * S && badgeFs > 5 * S) {
+          ctx.letterSpacing = `${0.6 * S}px`
+          while (ctx.measureText(badgeLabel).width > RIGHT_W - 28 * S && badgeFs > 5 * S) {
             badgeFs -= S
             ctx.font = `700 ${badgeFs}px ${FONT}`
           }
-          ctx.fillStyle = "#fff"
-          ctx.textAlign = "center"
-          drawText(badgeLabel, RIGHT_C, yR + (BADGE_H - tH(badgeFs)) / 2)
+          ctx.letterSpacing = "0px"
+          const bC = document.createElement("canvas")
+          bC.width = RIGHT_W; bC.height = BADGE_H
+          const bX = bC.getContext("2d")!
+          bX.textBaseline = "top"
+          bX.fillStyle = "rgba(255,255,255,0.92)"
+          bX.fillRect(0, 0, RIGHT_W, BADGE_H)
+          bX.font = `700 ${badgeFs}px ${FONT}`
+          bX.letterSpacing = `${0.6 * S}px`
+          bX.globalCompositeOperation = "destination-out"
+          bX.fillStyle = "rgba(0,0,0,1)"
+          bX.strokeStyle = "rgba(0,0,0,1)"
+          bX.lineWidth = S * 0.6
+          bX.textAlign = "center"
+          const bTY = (BADGE_H - tH(badgeFs)) / 2
+          bX.strokeText(badgeLabel, RIGHT_W / 2, bTY)
+          bX.fillText(badgeLabel, RIGHT_W / 2, bTY)
+          ctx.drawImage(bC, RIGHT_X, yR)
           yR += BADGE_H + 10 * S
         } else {
           yR += 2 * S
@@ -218,98 +253,111 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       }
 
       if (showCumGWA) {
-        shadow()
+        noShadow()
+        ctx.textAlign = "center"
         ctx.font = `600 ${7 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
         drawText("CUMULATIVE GWA", RIGHT_C, yR); yR += tH(7 * S) + 4 * S
 
         ctx.font = `700 ${28 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
-        drawText(cumulative.gwa > 0 ? cumulative.gwa.toFixed(4) : "—", RIGHT_C, yR)
+        drawText(cumulative.gwa > 0 ? fmt(cumulative.gwa) : "—", RIGHT_C, yR)
         yR += tH(28 * S) + 4 * S
 
         if (cumulative.units > 0) {
-          ctx.font = `400 ${8 * S}px ${FONT}`
+          ctx.font = `500 ${7 * S}px ${FONT}`
           ctx.fillStyle = "#fff"
-          drawText(`${Math.round(cumulative.units)} total units`, RIGHT_C, yR)
-          yR += tH(8 * S) + 8 * S
+          drawText(`${Math.round(cumulative.units)} TOTAL UNITS`, RIGHT_C, yR)
+          yR += tH(7 * S) + 8 * S
         }
 
         if (latinBadge) {
           yR += 8 * S
           const latinLabel = displayLatin(latinBadge).toUpperCase()
-          noShadow()
-          ctx.fillStyle = latinBadge === "Summa Cum Laude" ? GREEN_LIGHT : latinBadge === "Magna Cum Laude" ? GREEN_DARK : BLACK
-          ctx.fillRect(RIGHT_X, yR, RIGHT_W, BADGE_H)
-          shadow()
-          let badgeFs = 7 * S
+          let badgeFs = 11 * S
           ctx.font = `700 ${badgeFs}px ${FONT}`
-          while (ctx.measureText(latinLabel).width > RIGHT_W - 12 * S && badgeFs > 5 * S) {
+          ctx.letterSpacing = `${0.6 * S}px`
+          while (ctx.measureText(latinLabel).width > RIGHT_W - 28 * S && badgeFs > 5 * S) {
             badgeFs -= S
             ctx.font = `700 ${badgeFs}px ${FONT}`
           }
-          ctx.fillStyle = "#fff"
-          ctx.textAlign = "center"
-          drawText(latinLabel, RIGHT_C, yR + (BADGE_H - tH(badgeFs)) / 2)
+          ctx.letterSpacing = "0px"
+          const lC = document.createElement("canvas")
+          lC.width = RIGHT_W; lC.height = BADGE_H
+          const lX = lC.getContext("2d")!
+          lX.textBaseline = "top"
+          lX.fillStyle = "rgba(255,255,255,0.92)"
+          lX.fillRect(0, 0, RIGHT_W, BADGE_H)
+          lX.font = `700 ${badgeFs}px ${FONT}`
+          lX.letterSpacing = `${0.6 * S}px`
+          lX.globalCompositeOperation = "destination-out"
+          lX.fillStyle = "rgba(0,0,0,1)"
+          lX.strokeStyle = "rgba(0,0,0,1)"
+          lX.lineWidth = S * 0.6
+          lX.textAlign = "center"
+          const lTY = (BADGE_H - tH(badgeFs)) / 2
+          lX.strokeText(latinLabel, RIGHT_W / 2, lTY)
+          lX.fillText(latinLabel, RIGHT_W / 2, lTY)
+          ctx.drawImage(lC, RIGHT_X, yR)
         }
       }
 
-      noShadow()
-      ctx.strokeStyle = "rgba(255,255,255,0.12)"
-      ctx.lineWidth = S
-      ctx.beginPath(); ctx.moveTo(PAD, yFoot); ctx.lineTo(W - PAD, yFoot); ctx.stroke()
-      shadow()
-      ctx.font = `400 ${8 * S}px ${FONT}`
-      ctx.fillStyle = "rgba(255,255,255,0.25)"
-      ctx.textAlign = "center"
-      drawText("AMIS GWA CALCULATOR", W / 2, yFoot + S + 6 * S)
 
     } else if (hasTable) {
-      // ── Dynamic-width table (no right column) ─────────────────────────
-      const ROW_H  = 20 * S
+      // ── Dynamic-width white table (no right column) ────────────────────
+      const ROW_H = 20 * S
       const PILL_W = 46 * S
       const PILL_H = 17 * S
       const TPAD_L = 20 * S
       const TPAD_R = 20 * S
       const UNIT_CW = 28 * S
 
-      // Measure subjects to compute tight width
-      ctx.font = `400 ${9 * S}px ${FONT}`
+      // Measure to compute tight width (use bold font for subjects)
+      ctx.font = `600 ${9 * S}px ${FONT}`
       let maxSubjW = ctx.measureText("SUBJECT").width
       for (const s of subjects) {
-        const text = s.code + (s.excludeFromGWA ? " ·" : "")
-        maxSubjW = Math.max(maxSubjW, ctx.measureText(text).width)
+        maxSubjW = Math.max(maxSubjW, ctx.measureText(s.code + (s.excludeFromGWA ? " ·" : "")).width)
       }
+      // Also account for term name width
+      ctx.font = `600 ${9 * S}px ${FONT}`
+      const termNameW = ctx.measureText(selectedKey).width
 
-      // Compute width: padding + subject + gap + units + gap + grade pill + padding
-      const CW = Math.max(240 * S, Math.min(W, TPAD_L + maxSubjW + 20 * S + UNIT_CW + 8 * S + PILL_W + TPAD_R))
+      const CW = Math.max(240 * S, Math.min(W, Math.max(
+        TPAD_L + termNameW + TPAD_R,
+        TPAD_L + maxSubjW + 20 * S + UNIT_CW + 8 * S + PILL_W + TPAD_R
+      )))
       const TABLE_W = CW - TPAD_L - TPAD_R
-
       const colGrade = TPAD_L + TABLE_W - PILL_W / 2
       const colUnits = colGrade - PILL_W / 2 - 6 * S - UNIT_CW / 2
-      const colSubj  = TPAD_L
+      const colSubj = TPAD_L
 
       let contentH = 0
-      contentH += tH(7 * S) + 8 * S
+      contentH += tH(9 * S) + 14 * S  // term name
+      contentH += tH(7 * S) + 8 * S   // header
       contentH += subjects.length * ROW_H
-
-      const yFoot = Math.ceil(14 * S + contentH) + 14 * S
-      const totalH = yFoot + S + 6 * S + tH(8 * S) + 8 * S
+      contentH += 10 * S + tH(6 * S)  // disclaimer
 
       canvas.width = CW
-      canvas.height = Math.ceil(totalH)
+      canvas.height = Math.ceil(14 * S + contentH + 14 * S)
       ctx.clearRect(0, 0, CW, canvas.height)
       ctx.textBaseline = "top"
 
       noShadow()
-      ctx.fillStyle = "rgba(0,0,0,0.22)"
-      ctx.fillRect(0, 0, CW, yFoot)
+      ctx.fillStyle = "#ffffff"
+      ctx.fillRect(0, 0, CW, canvas.height)
 
       let y = 14 * S
 
-      shadow()
+      // Term name
+      ctx.font = `600 ${9 * S}px ${FONT}`
+      ctx.fillStyle = "rgba(0,0,0,0.80)"
+      ctx.textAlign = "left"
+      drawText(selectedKey, colSubj, y)
+      y += tH(9 * S) + 14 * S
+
+      // Header
       ctx.font = `500 ${7 * S}px ${FONT}`
-      ctx.fillStyle = "rgba(255,255,255,0.45)"
+      ctx.fillStyle = "rgba(0,0,0,0.80)"
       ctx.textAlign = "left"
       drawText("SUBJECT", colSubj, y)
       ctx.textAlign = "center"
@@ -317,9 +365,15 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       drawText("GRADE", colGrade, y)
       y += tH(7 * S) + 8 * S
 
+      // Header separator
+      ctx.strokeStyle = "rgba(0,0,0,0.10)"
+      ctx.lineWidth = S
+      ctx.beginPath(); ctx.moveTo(0, y - 4 * S); ctx.lineTo(CW, y - 4 * S); ctx.stroke()
+
+      // Rows
       for (const s of subjects) {
         const excluded = !!s.excludeFromGWA
-        const gradeBg = excluded ? "rgba(255,255,255,0.18)" : gradeColor(s.grade)
+        const gradeBg = excluded ? "rgba(0,0,0,0.07)" : gradeColor(s.grade)
         const rowTH = tH(9 * S)
         const textY = Math.round(y + (ROW_H - rowTH) / 2)
         const pillTop = Math.round(y + (ROW_H - PILL_H) / 2)
@@ -327,43 +381,38 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         noShadow()
         ctx.fillStyle = gradeBg
         ctx.fillRect(colGrade - PILL_W / 2, pillTop, PILL_W, PILL_H)
-        shadow()
 
-        ctx.font = `400 ${9 * S}px ${FONT}`
+        ctx.font = `600 ${9 * S}px ${FONT}`
         ctx.textAlign = "left"
-        ctx.fillStyle = excluded ? "rgba(255,255,255,0.3)" : "#fff"
+        ctx.fillStyle = excluded ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.85)"
         drawText(s.code + (excluded ? " ·" : ""), colSubj, textY)
 
         ctx.textAlign = "center"
-        ctx.fillStyle = excluded ? "rgba(255,255,255,0.3)" : "#fff"
+        ctx.fillStyle = excluded ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.85)"
         drawText(String(s.units), colUnits, textY)
 
         ctx.font = `600 ${9 * S}px ${FONT}`
-        ctx.fillStyle = excluded ? "rgba(255,255,255,0.5)" : "#fff"
+        ctx.fillStyle = excluded ? "rgba(0,0,0,0.25)" : "#fff"
         drawText(s.gradeLabel || (s.grade === 0 ? "—" : s.grade.toFixed(2)), colGrade, textY)
 
         y += ROW_H
       }
 
-      noShadow()
-      ctx.strokeStyle = "rgba(255,255,255,0.12)"
-      ctx.lineWidth = S
-      ctx.beginPath(); ctx.moveTo(PAD, yFoot); ctx.lineTo(CW - PAD, yFoot); ctx.stroke()
-      shadow()
-      ctx.font = `400 ${8 * S}px ${FONT}`
-      ctx.fillStyle = "rgba(255,255,255,0.25)"
-      ctx.textAlign = "center"
-      drawText("AMIS GWA CALCULATOR", CW / 2, yFoot + S + 6 * S)
+      // Disclaimer
+      ctx.font = `400 ${6 * S}px ${FONT}`
+      ctx.fillStyle = "rgba(0,0,0,0.30)"
+      ctx.textAlign = "left"
+      drawText("Unofficial. Verify with OUR for validity.", colSubj, y + 10 * S)
 
     } else {
       // ── Single-column centered layout ──────────────────────────────────
-      const BADGE_H = 24 * S
+      const BADGE_H = 20 * S
 
       // Measure widest elements to compute tight canvas width
       canvas.width = 4000
       const mW = (text: string, font: string) => { ctx.font = font; return ctx.measureText(text).width }
-      const badgeLabel  = badge      ? displayScholar(badge as any).toUpperCase() : ""
-      const latinLabel  = latinBadge ? displayLatin(latinBadge).toUpperCase()     : ""
+      const badgeLabel = badge ? displayScholar(badge as any).toUpperCase() : ""
+      const latinLabel = latinBadge ? displayLatin(latinBadge).toUpperCase() : ""
       let contentH = 0
       if (showTermGWA) {
         contentH += tH(9 * S) + 6 * S
@@ -383,11 +432,11 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
 
       const footerH = 8 * S + S + 6 * S + tH(8 * S) + 8 * S
       const widths = [
-        showTermGWA && badge      ? mW(badgeLabel,  `700 ${9 * S}px ${FONT}`) + 2 * PAD + 32 * S : 0,
-        showCumGWA  && latinBadge ? mW(latinLabel,  `700 ${9 * S}px ${FONT}`) + 2 * PAD + 32 * S : 0,
-        showTermGWA               ? mW(selectedKey, `400 ${11 * S}px ${FONT}`) + 2 * PAD : 0,
-        showTermGWA               ? mW(term.gwa.toFixed(4), `700 ${42 * S}px ${FONT}`) + 2 * PAD : 0,
-        showCumGWA                ? mW(cumulative.gwa > 0 ? cumulative.gwa.toFixed(4) : "—", `700 ${42 * S}px ${FONT}`) + 2 * PAD : 0,
+        showTermGWA && badge ? mW(badgeLabel, `600 ${9 * S}px ${FONT}`) + 2 * PAD + 32 * S : 0,
+        showCumGWA && latinBadge ? mW(latinLabel, `600 ${9 * S}px ${FONT}`) + 2 * PAD + 32 * S : 0,
+        showTermGWA ? mW(selectedKey, `400 ${11 * S}px ${FONT}`) + 2 * PAD : 0,
+        showTermGWA ? mW(term.gwa.toFixed(4), `700 ${42 * S}px ${FONT}`) + 2 * PAD : 0,
+        showCumGWA ? mW(cumulative.gwa > 0 ? cumulative.gwa.toFixed(4) : "—", `700 ${42 * S}px ${FONT}`) + 2 * PAD : 0,
       ]
       const CW = Math.ceil(Math.max(220 * S, ...widths))
       const totalH = Math.max(240 * S, contentH + footerH + 64 * S)
@@ -404,36 +453,57 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       const CX = CW / 2
       const CPAD = PAD
 
-      noShadow()
+      ctx.shadowColor = "rgba(0,0,0,0.22)"
+      ctx.shadowBlur = 14 * S
+      ctx.shadowOffsetY = 0
       ctx.textAlign = "center"
       ctx.fillStyle = "#fff"
 
       if (showTermGWA) {
-        shadow()
         ctx.font = `600 ${9 * S}px ${FONT}`
+        ctx.fillStyle = "#fff"
         drawText("TERM GWA", CX, y); y += tH(9 * S) + 6 * S
 
-        ctx.font = `400 ${11 * S}px ${FONT}`
+        ctx.font = `700 ${11 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
         drawText(selectedKey, CX, y); y += tH(11 * S) + 8 * S
 
         ctx.font = `700 ${42 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
-        drawText(term.gwa.toFixed(4), CX, y); y += tH(42 * S) + 6 * S
+        drawText(fmt(term.gwa), CX, y); y += tH(42 * S) + 6 * S
 
-        ctx.font = `400 ${10 * S}px ${FONT}`
+        ctx.font = `500 ${9 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
-        drawText(`${Math.round(term.units)} units`, CX, y); y += tH(10 * S) + 12 * S
+        drawText(`${Math.round(term.units)} UNITS`, CX, y); y += tH(9 * S) + 12 * S
 
         if (badge) {
           noShadow()
-          ctx.fillStyle = badge === "University Scholar" ? GREEN_LIGHT : GREEN_DARK
-          ctx.fillRect(CPAD, y, CW - CPAD * 2, BADGE_H)
-          shadow()
-          ctx.font = `700 ${9 * S}px ${FONT}`
-          ctx.fillStyle = "#fff"
-          ctx.textAlign = "center"
-          drawText(badgeLabel, CX, y + (BADGE_H - tH(9 * S)) / 2)
+          const sbW = CW - CPAD * 2
+          let sbFs = 9 * S
+          ctx.font = `700 ${sbFs}px ${FONT}`
+          ctx.letterSpacing = `${0.6 * S}px`
+          while (ctx.measureText(badgeLabel).width > sbW - 28 * S && sbFs > 5 * S) {
+            sbFs -= S
+            ctx.font = `700 ${sbFs}px ${FONT}`
+          }
+          ctx.letterSpacing = "0px"
+          const sbC = document.createElement("canvas")
+          sbC.width = sbW; sbC.height = BADGE_H
+          const sbX = sbC.getContext("2d")!
+          sbX.textBaseline = "top"
+          sbX.fillStyle = "rgba(255,255,255,0.92)"
+          sbX.fillRect(0, 0, sbW, BADGE_H)
+          sbX.font = `700 ${sbFs}px ${FONT}`
+          sbX.letterSpacing = `${0.6 * S}px`
+          sbX.globalCompositeOperation = "destination-out"
+          sbX.fillStyle = "rgba(0,0,0,1)"
+          sbX.strokeStyle = "rgba(0,0,0,1)"
+          sbX.lineWidth = S * 0.6
+          sbX.textAlign = "center"
+          const sbTY = (BADGE_H - tH(sbFs)) / 2
+          sbX.strokeText(badgeLabel, sbW / 2, sbTY)
+          sbX.fillText(badgeLabel, sbW / 2, sbTY)
+          ctx.drawImage(sbC, CPAD, y)
           y += BADGE_H + 8 * S
         } else {
           y += 8 * S
@@ -446,45 +516,64 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         ctx.lineWidth = S
         ctx.beginPath(); ctx.moveTo(CPAD, y); ctx.lineTo(CW - CPAD, y); ctx.stroke()
         y += S + 16 * S
+        ctx.shadowColor = "rgba(0,0,0,0.22)"
+        ctx.shadowBlur = 14 * S
+        ctx.shadowOffsetY = 0
       }
 
       if (showCumGWA) {
-        shadow()
         ctx.font = `600 ${9 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
         drawText("CUMULATIVE GWA", CX, y); y += tH(9 * S) + 6 * S
 
         ctx.font = `700 ${42 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
-        drawText(cumulative.gwa > 0 ? cumulative.gwa.toFixed(4) : "—", CX, y)
+        drawText(cumulative.gwa > 0 ? fmt(cumulative.gwa) : "—", CX, y)
         y += tH(42 * S) + 6 * S
 
         if (cumulative.units > 0) {
-          ctx.font = `400 ${10 * S}px ${FONT}`
+          ctx.font = `500 ${9 * S}px ${FONT}`
           ctx.fillStyle = "#fff"
-          drawText(`${Math.round(cumulative.units)} total units`, CX, y)
-          y += tH(10 * S) + 8 * S
+          drawText(`${Math.round(cumulative.units)} TOTAL UNITS`, CX, y)
+          y += tH(9 * S) + 8 * S
         }
 
         if (latinBadge) {
           noShadow()
-          ctx.fillStyle = latinBadge === "Summa Cum Laude" ? GREEN_LIGHT : latinBadge === "Magna Cum Laude" ? GREEN_DARK : BLACK
-          ctx.fillRect(CPAD, y, CW - CPAD * 2, BADGE_H)
-          shadow()
-          ctx.font = `700 ${9 * S}px ${FONT}`
-          ctx.fillStyle = "#fff"
-          ctx.textAlign = "center"
-          drawText(latinLabel, CX, y + (BADGE_H - tH(9 * S)) / 2)
+          const slW = CW - CPAD * 2
+          let slFs = 9 * S
+          ctx.font = `700 ${slFs}px ${FONT}`
+          ctx.letterSpacing = `${0.6 * S}px`
+          while (ctx.measureText(latinLabel).width > slW - 28 * S && slFs > 6 * S) {
+            slFs -= S
+            ctx.font = `700 ${slFs}px ${FONT}`
+          }
+          ctx.letterSpacing = "0px"
+          const slC = document.createElement("canvas")
+          slC.width = slW; slC.height = BADGE_H
+          const slX = slC.getContext("2d")!
+          slX.textBaseline = "top"
+          slX.fillStyle = "rgba(255,255,255,0.92)"
+          slX.fillRect(0, 0, slW, BADGE_H)
+          slX.font = `700 ${slFs}px ${FONT}`
+          slX.letterSpacing = `${0.6 * S}px`
+          slX.globalCompositeOperation = "destination-out"
+          slX.fillStyle = "rgba(0,0,0,1)"
+          slX.strokeStyle = "rgba(0,0,0,1)"
+          slX.lineWidth = S * 0.6
+          slX.textAlign = "center"
+          const slTY = (BADGE_H - tH(slFs)) / 2
+          slX.strokeText(latinLabel, slW / 2, slTY)
+          slX.fillText(latinLabel, slW / 2, slTY)
+          ctx.drawImage(slC, CPAD, y)
         }
       }
 
       // Draw footer relative to centered content
       const footerY = y + contentH + 8 * S
-      noShadow()
       ctx.strokeStyle = "rgba(255,255,255,0.12)"
       ctx.lineWidth = S
       ctx.beginPath(); ctx.moveTo(CPAD, footerY); ctx.lineTo(CW - CPAD, footerY); ctx.stroke()
-      shadow()
       ctx.font = `400 ${8 * S}px ${FONT}`
       ctx.fillStyle = "rgba(255,255,255,0.25)"
       ctx.textAlign = "center"
@@ -499,7 +588,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
     const canvas = buildCanvas()
     if (!canvas) { setPreviewUrl(""); return }
     setPreviewUrl(canvas.toDataURL("image/png"))
-  }, [selectedKey, includeTable, showTermGWA, showCumGWA, showScholar, showLatin, term, cumulative.gwa])
+  }, [selectedKey, includeTable, showTermGWA, showCumGWA, showScholar, showLatin, redactGWA, term, cumulative.gwa])
 
   const handleDownload = () => {
     const canvas = buildCanvas()
@@ -599,6 +688,11 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
                 </label>
               )
             })()}
+            <label className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors">
+              <input type="checkbox" checked={redactGWA} onChange={(e) => setRedactGWA(e.target.checked)} className="accent-upb-green" />
+              <span className="text-xs text-gray-700 flex-1">Redact GWA</span>
+              <span className="text-[10px] text-gray-400 italic">shows 1.xx / 2.xx</span>
+            </label>
           </div>
 
           {/* Preview — rendered from the same canvas as the export */}
