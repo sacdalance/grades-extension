@@ -133,9 +133,9 @@ function WhatIfTermGroup({ term, onUpdate, onDelete, nextSubjectId }: {
                 </td>
                 <td className="px-1 py-1" style={{ width: "5rem" }}>
                   <Input
-                    type="number" value={s.units} step="0.5" min="0" max="6"
+                    type="number" value={s.units} step="1" min="0" max="6"
                     className="text-xs text-center"
-                    onChange={(e) => updateSubject(s.id, { units: Math.min(6, Math.max(0, parseFloat(e.target.value) || 0)) })}
+                    onChange={(e) => updateSubject(s.id, { units: Math.min(6, Math.max(0, Math.round(parseFloat(e.target.value) || 0))) })}
                   />
                 </td>
                 <td className="pl-1 pr-3 py-1" style={{ width: "6rem" }}>
