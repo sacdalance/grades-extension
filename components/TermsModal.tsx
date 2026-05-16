@@ -17,7 +17,7 @@ export function TermsModal({ onClose }: Props) {
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 shrink-0">
           <div>
             <h2 className="text-sm font-semibold text-gray-900">Terms of Use &amp; Privacy Notice</h2>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider">AMIS GWA Calculator</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">GinaGWA mo?! — AMIS GWA Calculator</p>
           </div>
           <Button variant="icon" size="icon" onClick={onClose} className="text-lg leading-none">×</Button>
         </div>
@@ -27,7 +27,7 @@ export function TermsModal({ onClose }: Props) {
           <div className="pl-3 border-l-2 border-upb-green/30">
             <p className="text-[10px] font-semibold text-upb-maroon uppercase tracking-widest mb-1">About This Tool</p>
             <p>
-              AMIS GWA Calculator is a student-developed browser extension created independently. It is not affiliated with, endorsed by, or in any way connected to the University of the Philippines, its constituent universities, colleges, offices, or information systems.
+              GinaGWA mo?! (also known as AMIS GWA Calculator) is a student-developed browser extension created independently. It is not affiliated with, endorsed by, or in any way connected to the University of the Philippines, its constituent universities, colleges, offices, or information systems.
             </p>
           </div>
 

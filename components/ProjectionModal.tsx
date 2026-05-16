@@ -15,7 +15,7 @@ interface Props {
 export function SetupScreen({ totalUnits, onSave, onCancel }: { totalUnits: number; onSave: (v: number) => void; onCancel?: () => void }) {
   const [input, setInput] = useState(totalUnits > 0 ? String(totalUnits) : "")
   const parsed = parseInt(input)
-  const valid = !!parsed && parsed >= 1
+  const valid = !!parsed && parsed >= 1 && parsed <= 250
 
   return (
     <div className="flex-1 px-5 py-5 space-y-4">
@@ -28,12 +28,13 @@ export function SetupScreen({ totalUnits, onSave, onCancel }: { totalUnits: numb
           type="number"
           value={input}
           min={1}
+          max={250}
           placeholder="e.g. 160"
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && valid && onSave(parsed)}
           className="w-full h-8 rounded-md border border-gray-200 bg-gray-50 px-3 text-sm text-gray-800 focus:outline-none focus:border-upb-green/40 focus:ring-1 focus:ring-upb-green/20 hover:border-gray-300"
         />
-        <p className="text-[10px] text-gray-400">Typical UP programs: 155–170 units</p>
+        <p className="text-[10px] text-gray-400">Typical UP programs: 155–170 units · Max: 250</p>
       </div>
       <div className="flex gap-2 justify-end pt-1">
         {onCancel && <Button variant="secondary" size="sm" onClick={onCancel}>Cancel</Button>}
@@ -83,7 +84,7 @@ function ProjectionRow({ p, currentGWA, remainingUnits }: { p: Projection; curre
   // required = 1.00 (perfect) → 0% (very hard), required = 5.00 (worst) → 100% (easy/guaranteed)
   const barPct = p.status === "guaranteed" ? 100
     : p.status === "impossible" ? 0
-    : Math.min(100, Math.max(0, ((p.requiredGWA! - 1.0) / 2.0) * 100))
+    : Math.min(100, Math.max(0, ((p.requiredGWA! - 1.0) / 4.0) * 100))
 
   return (
     <div className="px-5 py-3.5 space-y-2">
@@ -129,7 +130,7 @@ function ProjectionRow({ p, currentGWA, remainingUnits }: { p: Projection; curre
         </div>
         <div className="flex justify-between">
           <span className="text-[9px] text-gray-300 tabular-nums">1.00 ← harder</span>
-          <span className="text-[9px] text-gray-300 tabular-nums">easier → 3.00</span>
+          <span className="text-[9px] text-gray-300 tabular-nums">easier → 5.00</span>
         </div>
       </div>
     </div>
@@ -137,15 +138,16 @@ function ProjectionRow({ p, currentGWA, remainingUnits }: { p: Projection; curre
 }
 
 export function ProjectionModal({ currentGWA, currentUnits, totalUnits, onClose, onSaveTotalUnits }: Props) {
-  const [editing, setEditing] = useState(totalUnits === 0)
+  const [editing, setEditing] = useState(false)
 
-  const showSetup = editing || totalUnits === 0
-  const projections = !showSetup ? calculateProjections(currentGWA, currentUnits, totalUnits) : []
+  const projections = totalUnits > 0 ? calculateProjections(currentGWA, currentUnits, totalUnits) : []
   const remainingUnits = Math.max(0, totalUnits - currentUnits)
   const completedPct = totalUnits > 0 ? Math.min(100, Math.round((currentUnits / totalUnits) * 100)) : 0
 
-  const bestCase = !showSetup ? estimateFinalGWA(currentGWA, currentUnits, totalUnits, 1.0) : 0
-  const worstCase = !showSetup ? estimateFinalGWA(currentGWA, currentUnits, totalUnits, 3.0) : 0
+  const bestCase = totalUnits > 0 ? estimateFinalGWA(currentGWA, currentUnits, totalUnits, 1.0) : 0
+  const avgCase = totalUnits > 0 ? estimateFinalGWA(currentGWA, currentUnits, totalUnits, 2.0) : 0
+  const worstCase = totalUnits > 0 ? estimateFinalGWA(currentGWA, currentUnits, totalUnits, 3.0) : 0
+  const absoluteWorstCase = totalUnits > 0 ? estimateFinalGWA(currentGWA, currentUnits, totalUnits, 5.0) : 0
 
   const handleSave = (v: number) => {
     onSaveTotalUnits(v)
@@ -161,7 +163,7 @@ export function ProjectionModal({ currentGWA, currentUnits, totalUnits, onClose,
 
         <div
           className="flex flex-col bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden"
-          style={{ width: "min(22rem, 92vw)", maxHeight: "82vh", animation: "gwa-slide-up 0.2s ease-out both" }}>
+          style={{ width: "min(28rem, 92vw)", maxHeight: "82vh", animation: "gwa-slide-up 0.2s ease-out both" }}>
 
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 shrink-0">
             <h2 className="text-sm font-semibold text-gray-900">Latin Honor Projection</h2>
@@ -207,16 +209,26 @@ export function ProjectionModal({ currentGWA, currentUnits, totalUnits, onClose,
               {/* Final GWA Outlook */}
               <div className="px-5 py-3 bg-gray-50/50 border-b border-gray-100">
                 <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider block mb-2">Graduation Outlook</span>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-4 gap-2">
                   <div className="bg-white border border-gray-100 rounded p-2 text-center">
-                    <p className="text-[9px] text-gray-400 uppercase font-medium">Best Possible</p>
+                    <p className="text-[9px] text-gray-400 uppercase font-medium">Best Case</p>
                     <p className="text-sm font-bold text-emerald-600 tabular-nums">{bestCase.toFixed(4)}</p>
                     <p className="text-[8px] text-gray-400 mt-0.5">(if all 1.00s)</p>
                   </div>
                   <div className="bg-white border border-gray-100 rounded p-2 text-center">
-                    <p className="text-[9px] text-gray-400 uppercase font-medium">Worst Possible</p>
+                    <p className="text-[9px] text-gray-400 uppercase font-medium">Average Case</p>
+                    <p className="text-sm font-bold text-amber-500 tabular-nums">{avgCase.toFixed(4)}</p>
+                    <p className="text-[8px] text-gray-400 mt-0.5">(if all 2.00s)</p>
+                  </div>
+                  <div className="bg-white border border-gray-100 rounded p-2 text-center">
+                    <p className="text-[9px] text-gray-400 uppercase font-medium">Worst Case</p>
                     <p className="text-sm font-bold text-rose-600 tabular-nums">{worstCase.toFixed(4)}</p>
                     <p className="text-[8px] text-gray-400 mt-0.5">(if all 3.00s)</p>
+                  </div>
+                  <div className="bg-white border border-gray-100 rounded p-2 text-center">
+                    <p className="text-[9px] text-gray-400 uppercase font-medium">Absolute Cinema</p>
+                    <p className="text-sm font-bold text-gray-400 tabular-nums">{absoluteWorstCase.toFixed(4)}</p>
+                    <p className="text-[8px] text-gray-400 mt-0.5">(if all 5.00s)</p>
                   </div>
                 </div>
               </div>
@@ -236,7 +248,7 @@ export function ProjectionModal({ currentGWA, currentUnits, totalUnits, onClose,
       {editing && (
         <div
           className="pointer-events-auto flex items-center justify-center"
-          style={{ position: "fixed", inset: 0, zIndex: 2147483649, animation: "gwa-fade 0.15s ease-out both" }}>
+          style={{ position: "fixed", inset: 0, zIndex: 2147483649, background: "rgba(0,0,0,0.4)", animation: "gwa-fade 0.15s ease-out both" }}>
           <div
             className="flex flex-col bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden"
             style={{ width: "min(22rem, 92vw)", animation: "gwa-slide-up 0.2s ease-out both" }}>

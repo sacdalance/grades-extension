@@ -82,7 +82,7 @@ export function Dashboard({ current, cumulative, savedTerms, termOrder, graduati
           onClick={handleExpand}
           style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
           className="inline-flex items-center gap-2 rounded-l-md bg-upb-green px-2 py-3 text-white shadow-md hover:bg-upb-green/90 transition-colors text-xs font-medium">
-          GWA Calculator
+          GinaGWA mo?!
         </button>
       </div>
     )
@@ -95,8 +95,8 @@ export function Dashboard({ current, cumulative, savedTerms, termOrder, graduati
         <CardHeader className="bg-upb-green px-5 py-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <img src={chrome.runtime.getURL("assets/l-logo-white.png")} alt="" className="h-5 w-5 object-contain opacity-90" />
-              <CardTitle className="text-white text-sm tracking-wide">AMIS GWA Calculator</CardTitle>
+              <img src={chrome.runtime.getURL("assets/l-logo-white.png")} alt="" className="h-5 w-5 object-contain" />
+              <CardTitle className="text-white text-sm tracking-wide">GinaGWA mo?!</CardTitle>
             </div>
             <button 
               onClick={handleCollapse} 
@@ -124,7 +124,7 @@ export function Dashboard({ current, cumulative, savedTerms, termOrder, graduati
         <CardContent className="space-y-3 pt-3 pb-3">
           {/* Current term */}
           <div className="space-y-2">
-            <p className="text-[10px] font-semibold text-upb-maroon uppercase tracking-widest border-l-2 border-upb-maroon pl-2">
+            <p className="text-[10px] font-semibold text-upb-maroon uppercase tracking-widest">
               Term GWA
             </p>
 
@@ -198,7 +198,7 @@ export function Dashboard({ current, cumulative, savedTerms, termOrder, graduati
 
           {/* Cumulative */}
           <div className="space-y-2">
-            <p className="text-[10px] font-semibold text-upb-maroon uppercase tracking-widest border-l-2 border-upb-maroon pl-2">
+            <p className="text-[10px] font-semibold text-upb-maroon uppercase tracking-widest">
               Cumulative GWA
             </p>
             <div className="grid grid-cols-2 gap-2">

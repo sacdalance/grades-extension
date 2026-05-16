@@ -233,7 +233,7 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
 
         {/* Actions row */}
         <div className="border-t border-gray-200 px-5 pt-3 pb-0 flex gap-2 flex-wrap">
-          <Button size="sm" onClick={onAnalyze} disabled={Object.keys(savedTerms).length < 2}>Analyze Trend</Button>
+          <Button size="sm" onClick={onAnalyze} disabled={Object.keys(savedTerms).length < 2}>Analyze</Button>
           <Button size="sm" onClick={() => importRef.current?.click()}>Import JSON</Button>
           <Button size="sm" onClick={() => setConfirmExport(true)} disabled={orderedKeys.length === 0}>Export JSON</Button>
           <Button size="sm" className="bg-gray-900 hover:bg-gray-800 text-white" onClick={() => setShareOpen(true)} disabled={orderedKeys.length === 0}>Share</Button>

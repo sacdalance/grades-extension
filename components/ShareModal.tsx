@@ -29,9 +29,20 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
   const [showScholar, setShowScholar] = useState(true)
   const [showLatin, setShowLatin] = useState(true)
   const [redactGWA, setRedactGWA] = useState(false)
+  const [showShadow, setShowShadow] = useState(true)
   const [downloading, setDownloading] = useState(false)
   const [copying, setCopying] = useState(false)
   const [previewUrl, setPreviewUrl] = useState("")
+  const [logoImg, setLogoImg] = useState<HTMLImageElement | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const img = new Image()
+    img.onload = () => { if (!cancelled) setLogoImg(img) }
+    img.onerror = () => { if (!cancelled) setLogoImg(null) }
+    img.src = chrome.runtime.getURL("assets/l-logo-white.png")
+    return () => { cancelled = true }
+  }, [])
   const term = savedTerms[selectedKey]
   const cumulative = calcCumulativeGWA(Object.values(savedTerms))
   const scholar = term ? getScholarStatus(term.gwa, term.units, term.subjects) : null
@@ -68,6 +79,21 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       ctx.shadowOffsetY = 0
     }
     const drawText = (text: string, x: number, y: number) => ctx.fillText(text, x, y)
+
+    if (!hasTable && !hasRightCol) {
+      // ── Logo-only layout ──────────────────────────────────────────────
+      const SIZE = 200 * S
+      canvas.width = SIZE
+      canvas.height = SIZE
+      ctx.clearRect(0, 0, SIZE, SIZE)
+      ctx.textBaseline = "top"
+      if (logoImg) {
+        const logoSize = 80 * S
+        ctx.globalAlpha = 1
+        ctx.drawImage(logoImg, (SIZE - logoSize) / 2, (SIZE - logoSize) / 2, logoSize, logoSize)
+      }
+      return canvas
+    }
 
     if (hasTable && hasRightCol) {
       // ── Two-column layout ──────────────────────────────────────────────
@@ -182,12 +208,22 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         yL += ROW_H
       }
 
-      // Disclaimer
+      // Disclaimer with logo
       noShadow()
+      const dLogoSize = 10 * S
+      const dLineH = Math.max(dLogoSize, tH(6 * S))
+      const dBaseY = yL + 10 * S
+      if (logoImg) {
+        ctx.filter = "brightness(0)"
+        ctx.globalAlpha = 0.3
+        ctx.drawImage(logoImg, colSubj, dBaseY + (dLineH - dLogoSize) / 2, dLogoSize, dLogoSize)
+        ctx.filter = "none"
+        ctx.globalAlpha = 1
+      }
       ctx.font = `400 ${6 * S}px ${FONT}`
       ctx.fillStyle = "rgba(0,0,0,0.30)"
       ctx.textAlign = "left"
-      drawText("Unofficial. Verify with OUR for validity.", colSubj, yL + 10 * S)
+      drawText("For reference only. Verify with OUR.", colSubj + (logoImg ? dLogoSize + 3 * S : 0), dBaseY + (dLineH - tH(6 * S)) / 2)
 
       // ── Right panel (GWA) ──────────────────────────────────────────────
       if (showTermGWA) {
@@ -296,7 +332,6 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         }
       }
 
-
     } else if (hasTable) {
       // ── Dynamic-width white table (no right column) ────────────────────
       const ROW_H = 20 * S
@@ -392,11 +427,21 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         y += ROW_H
       }
 
-      // Disclaimer
+      // Disclaimer with logo
+      const dLogoSize = 10 * S
+      const dLineH2 = Math.max(dLogoSize, tH(6 * S))
+      const dBaseY2 = y + 10 * S
+      if (logoImg) {
+        ctx.filter = "brightness(0)"
+        ctx.globalAlpha = 0.3
+        ctx.drawImage(logoImg, colSubj, dBaseY2 + (dLineH2 - dLogoSize) / 2, dLogoSize, dLogoSize)
+        ctx.filter = "none"
+        ctx.globalAlpha = 1
+      }
       ctx.font = `400 ${6 * S}px ${FONT}`
       ctx.fillStyle = "rgba(0,0,0,0.30)"
       ctx.textAlign = "left"
-      drawText("Unofficial. Verify with OUR for validity.", colSubj, y + 10 * S)
+      drawText("For reference only. Verify with OUR.", colSubj + (logoImg ? dLogoSize + 3 * S : 0), dBaseY2 + (dLineH2 - tH(6 * S)) / 2)
 
     } else {
       // ── Single-column centered layout ──────────────────────────────────
@@ -424,7 +469,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         if (latinBadge) contentH += BADGE_H + 8 * S
       }
 
-      const footerH = 8 * S + S + 6 * S + tH(8 * S) + 8 * S
+      const footerH = 6 * S + 28 * S + 4 * S
       const widths = [
         showTermGWA && badge ? mW(badgeLabel, `600 ${9 * S}px ${FONT}`) + 2 * PAD + 32 * S : 0,
         showCumGWA && latinBadge ? mW(latinLabel, `600 ${9 * S}px ${FONT}`) + 2 * PAD + 32 * S : 0,
@@ -433,7 +478,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         showCumGWA ? mW(cumulative.gwa > 0 ? cumulative.gwa.toFixed(4) : "—", `700 ${42 * S}px ${FONT}`) + 2 * PAD : 0,
       ]
       const CW = Math.ceil(Math.max(220 * S, ...widths))
-      const totalH = Math.max(240 * S, contentH + footerH + 64 * S)
+      const totalH = Math.max(240 * S, contentH + footerH + 28 * S)
 
       canvas.width = CW
       canvas.height = Math.ceil(totalH)
@@ -447,8 +492,9 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
       const CX = CW / 2
       const CPAD = PAD
 
-      ctx.shadowColor = "rgba(0,0,0,0.22)"
-      ctx.shadowBlur = 14 * S
+
+      ctx.shadowColor = showShadow ? "rgba(0,0,0,0.22)" : "transparent"
+      ctx.shadowBlur = showShadow ? 14 * S : 0
       ctx.shadowOffsetY = 0
       ctx.textAlign = "center"
       ctx.fillStyle = "#fff"
@@ -510,12 +556,15 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         ctx.lineWidth = S
         ctx.beginPath(); ctx.moveTo(CPAD, y); ctx.lineTo(CW - CPAD, y); ctx.stroke()
         y += S + 16 * S
-        ctx.shadowColor = "rgba(0,0,0,0.22)"
-        ctx.shadowBlur = 14 * S
+        ctx.shadowColor = showShadow ? "rgba(0,0,0,0.22)" : "transparent"
+        ctx.shadowBlur = showShadow ? 14 * S : 0
         ctx.shadowOffsetY = 0
       }
 
       if (showCumGWA) {
+        ctx.shadowColor = showShadow ? "rgba(0,0,0,0.22)" : "transparent"
+        ctx.shadowBlur = showShadow ? 14 * S : 0
+        ctx.shadowOffsetY = 0
         ctx.font = `600 ${9 * S}px ${FONT}`
         ctx.fillStyle = "#fff"
         drawText("CUMULATIVE GWA", CX, y); y += tH(9 * S) + 6 * S
@@ -560,18 +609,20 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
           slX.strokeText(latinLabel, slW / 2, slTY)
           slX.fillText(latinLabel, slW / 2, slTY)
           ctx.drawImage(slC, CPAD, y)
+          y += BADGE_H
         }
       }
 
-      // Draw footer below the last drawn element
-      const footerY = y + 8 * S
-      ctx.strokeStyle = "rgba(255,255,255,0.12)"
-      ctx.lineWidth = S
-      ctx.beginPath(); ctx.moveTo(CPAD, footerY); ctx.lineTo(CW - CPAD, footerY); ctx.stroke()
-      ctx.font = `400 ${8 * S}px ${FONT}`
-      ctx.fillStyle = "rgba(255,255,255,0.25)"
-      ctx.textAlign = "center"
-      drawText("AMIS GWA CALCULATOR", CX, footerY + S + 6 * S)
+      // Logo below content
+      if (logoImg) {
+        const logoSize = 28 * S
+        noShadow()
+        ctx.globalAlpha = 1
+        const logoGap = (showTermGWA && !showCumGWA && !badge) ? 2 * S : 6 * S
+        ctx.drawImage(logoImg, CX - logoSize / 2, y + logoGap, logoSize, logoSize)
+        ctx.globalAlpha = 1
+      }
+
     }
 
     return canvas
@@ -582,7 +633,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
     const canvas = buildCanvas()
     if (!canvas) { setPreviewUrl(""); return }
     setPreviewUrl(canvas.toDataURL("image/png"))
-  }, [selectedKey, includeTable, showTermGWA, showCumGWA, showScholar, showLatin, redactGWA, term, cumulative.gwa])
+  }, [selectedKey, includeTable, showTermGWA, showCumGWA, showScholar, showLatin, redactGWA, showShadow, term, cumulative.gwa, logoImg])
 
   const handleDownload = () => {
     const canvas = buildCanvas()
@@ -611,8 +662,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
           new ClipboardItem({ [blob.type]: blob })
         ])
         setTimeout(() => setCopying(false), 2000)
-      } catch (err) {
-        console.error("Copy failed", err)
+      } catch {
         setCopying(false)
       }
     }, "image/png")
@@ -681,11 +731,26 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
                 </label>
               )
             })()}
-            <label className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors">
-              <input type="checkbox" checked={redactGWA} onChange={(e) => setRedactGWA(e.target.checked)} className="accent-upb-green" />
-              <span className="text-xs text-gray-700 flex-1">Redact GWA</span>
-              <span className="text-[10px] text-gray-400 italic">shows 1.xx / 2.xx</span>
-            </label>
+            {(() => {
+              const redactDisabled = !showTermGWA && !showCumGWA
+              return (
+                <label className={`flex items-center gap-3 px-3 py-2.5 transition-colors ${redactDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-gray-50"}`}>
+                  <input type="checkbox" checked={redactGWA} onChange={(e) => setRedactGWA(e.target.checked)} className="accent-upb-green" disabled={redactDisabled} />
+                  <span className="text-xs text-gray-700 flex-1">Redact GWA</span>
+                  <span className="text-[10px] text-gray-400 italic">shows 1.xx / 2.xx</span>
+                </label>
+              )
+            })()}
+            {(() => {
+              const shadowDisabled = (!showTermGWA && !showCumGWA) || includeTable
+              return (
+                <label className={`flex items-center gap-3 px-3 py-2.5 transition-colors ${shadowDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-gray-50"}`}>
+                  <input type="checkbox" checked={showShadow} onChange={(e) => setShowShadow(e.target.checked)} className="accent-upb-green" disabled={shadowDisabled} />
+                  <span className="text-xs text-gray-700 flex-1">Text shadow on GWA</span>
+                  <span className="text-[10px] text-gray-400 italic">GWA only</span>
+                </label>
+              )
+            })()}
           </div>
 
           {/* Preview — rendered from the same canvas as the export */}
@@ -701,7 +766,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
             <p className="text-sm text-gray-400 text-center py-4">No term selected.</p>
           )}
 
-          <p className="text-[10px] text-gray-400">Unofficial. For reference only. Verify with OUR.</p>
+          <p className="text-[10px] text-gray-400">For reference only. Official academic records must be verified with the Office of the University Registrar (OUR).</p>
         </div>
 
         <div className="flex gap-2 justify-end px-5 py-3.5 border-t border-gray-100 shrink-0">

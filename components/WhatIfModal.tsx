@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { X, Trash2 } from "lucide-react"
 import { Button } from "~components/ui/button"
 import { Input } from "~components/ui/input"
@@ -30,11 +30,8 @@ interface WTerm {
   subjects: WSubject[]
 }
 
-let sid = 1
-let tid = 1
-
-function newSubject(): WSubject {
-  return { id: sid++, code: "New Subject", units: 3, grade: 1.0, gradeLabel: "", excludeFromGWA: false }
+function makeSubject(id: number): WSubject {
+  return { id, code: "New Subject", units: 3, grade: 1.0, gradeLabel: "", excludeFromGWA: false }
 }
 
 function termGWA(subjects: WSubject[]): { gwa: number; units: number } {
@@ -44,7 +41,7 @@ function termGWA(subjects: WSubject[]): { gwa: number; units: number } {
   return { gwa: units > 0 ? pts / units : 0, units }
 }
 
-function StatBox({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function StatBox({ label, value, sub }: { label: string; value: string; sub?: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5 rounded-md bg-upb-green/5 border border-upb-green/10 px-3 py-2.5 text-center">
       <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{label}</span>
@@ -54,10 +51,11 @@ function StatBox({ label, value, sub }: { label: string; value: string; sub?: st
   )
 }
 
-function WhatIfTermGroup({ term, onUpdate, onDelete }: {
+function WhatIfTermGroup({ term, onUpdate, onDelete, nextSubjectId }: {
   term: WTerm
   onUpdate: (t: WTerm) => void
   onDelete: () => void
+  nextSubjectId: () => number
 }) {
   const { gwa, units } = termGWA(term.subjects)
   const scholar = getScholarStatus(gwa, units, term.subjects.map(s => ({
@@ -71,7 +69,7 @@ function WhatIfTermGroup({ term, onUpdate, onDelete }: {
 
   const addSubject = () => {
     if (term.subjects.length >= 20) return
-    onUpdate({ ...term, subjects: [...term.subjects, newSubject()] })
+    onUpdate({ ...term, subjects: [...term.subjects, makeSubject(nextSubjectId())] })
   }
 
   const deleteSubject = (id: number) => {
@@ -196,8 +194,13 @@ function WhatIfTermGroup({ term, onUpdate, onDelete }: {
 }
 
 export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalUnits, onClose }: Props) {
+  const sid = useRef(0)
+  const tid = useRef(0)
+  const nextSid = () => ++sid.current
+  const nextTid = () => ++tid.current
+
   const [terms, setTerms] = useState<WTerm[]>([
-    { id: tid++, name: "Hypothetical Term 1", subjects: [newSubject()] }
+    { id: nextTid(), name: "Hypothetical Term 1", subjects: [makeSubject(nextSid())] }
   ])
   const [newTermName, setNewTermName] = useState("")
   const [projectOpen, setProjectOpen] = useState(false)
@@ -215,7 +218,7 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
   const createTerm = () => {
     if (terms.length >= 20) return
     const name = newTermName.trim() || `Hypothetical Term ${terms.length + 1}`
-    setTerms(prev => [...prev, { id: tid++, name, subjects: [newSubject()] }])
+    setTerms(prev => [...prev, { id: nextTid(), name, subjects: [makeSubject(nextSid())] }])
     setNewTermName("")
   }
 
@@ -225,18 +228,6 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
 
   const deleteTerm = (id: number) => {
     setTerms(prev => prev.filter(t => t.id !== id))
-  }
-
-  if (projectOpen) {
-    return (
-      <ProjectionModal
-        currentGWA={projectedGWA > 0 ? projectedGWA : currentGWA}
-        currentUnits={projectedUnits > 0 ? projectedUnits : currentUnits}
-        totalUnits={totalUnits}
-        onClose={() => setProjectOpen(false)}
-        onSaveTotalUnits={onSaveTotalUnits}
-      />
-    )
   }
 
   return (
@@ -251,29 +242,38 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
 
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 shrink-0">
-            <div>
-              <h2 className="text-sm font-semibold text-gray-900">What-If Calculator</h2>
-              <p className="text-[10px] text-gray-400">Starting from your {Math.round(currentUnits)} saved units · {currentGWA.toFixed(4)} GWA</p>
-            </div>
+            <h2 className="text-sm font-semibold text-gray-900">What-If Calculator</h2>
             <Button variant="icon" size="icon" onClick={onClose} className="text-lg leading-none">×</Button>
           </div>
 
           {/* Projected stats */}
           <div className="px-5 py-4 border-b border-gray-100 shrink-0 space-y-3">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               <StatBox
                 label="Units"
                 value={Math.round(projectedUnits).toString()}
-                sub={addedUnits > 0 ? `+${Math.round(addedUnits)} added` : "no change"}
+                sub="total projected"
               />
               <StatBox
                 label="GWA"
+                value={currentGWA.toFixed(4)}
+                sub="saved GWA"
+              />
+              <StatBox
+                label="Added"
+                value={addedUnits > 0 ? `+${Math.round(addedUnits)}` : "0"}
+                sub="units added"
+              />
+              <StatBox
+                label="What-If GWA"
                 value={projectedGWA > 0 ? projectedGWA.toFixed(4) : currentGWA.toFixed(4)}
-                sub={`was ${currentGWA.toFixed(4)}`}
+                sub={projectedGWA > 0 && projectedGWA !== currentGWA
+                  ? projectedGWA < currentGWA ? "▲ improved" : "▼ lower"
+                  : "no change"}
               />
             </div>
             <Button
-              className="w-full bg-upb-green hover:bg-upb-green/90 h-9 shadow-sm font-semibold text-sm"
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white h-9 shadow-sm font-semibold text-sm"
               onClick={() => setProjectOpen(true)}
               disabled={projectedGWA === 0 || totalUnits === 0}>
               Project Latin Honors
@@ -282,12 +282,20 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
 
           {/* Term list */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="pl-3 border-l-2 border-upb-green/30">
+              <p className="text-xs font-semibold text-gray-900">What-If Calculator</p>
+              <p className="text-[10px] text-gray-400">Starting from your {Math.round(currentUnits)} saved units · <span className="font-bold text-gray-600">{currentGWA.toFixed(4)}</span> GWA</p>
+              <p className="text-[10px] text-gray-500 leading-relaxed mt-1">
+                Add hypothetical terms and subjects below to simulate how future grades would affect your cumulative GWA. Changes here are <span className="font-medium text-gray-700">not saved</span> and will be lost on page reload.
+              </p>
+            </div>
             {terms.map(t => (
               <WhatIfTermGroup
                 key={t.id}
                 term={t}
                 onUpdate={(updated) => updateTerm(t.id, updated)}
                 onDelete={() => deleteTerm(t.id)}
+                nextSubjectId={nextSid}
               />
             ))}
           </div>
@@ -310,6 +318,15 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
         </div>
       </div>
 
+      {projectOpen && (
+        <ProjectionModal
+          currentGWA={projectedGWA > 0 ? projectedGWA : currentGWA}
+          currentUnits={projectedUnits > 0 ? projectedUnits : currentUnits}
+          totalUnits={totalUnits}
+          onClose={() => setProjectOpen(false)}
+          onSaveTotalUnits={onSaveTotalUnits}
+        />
+      )}
     </>
   )
 }

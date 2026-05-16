@@ -11,7 +11,7 @@ export function chronoOrder(key: string): number {
   return startYear * 10 + semOrder
 }
 
-export function calcTermGWA(subjects: Subject[]): { units: number; gwa: number } {
+function calcTermGWA(subjects: Subject[]): { units: number; gwa: number } {
   let totalUnits = 0
   let totalWeighted = 0
   for (const s of subjects) {

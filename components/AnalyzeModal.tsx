@@ -12,11 +12,9 @@ import { chronoOrder } from "~utils/calculator"
 const UP_GRADES = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 4.0, 5.0]
 
 function gradeColor(g: number): string {
-  if (g <= 1.5)  return "#018040"
-  if (g <= 2.0)  return "#34d399"
-  if (g <= 2.75) return "#f59e0b"
-  if (g <= 3.0)  return "#f97316"
-  return "#ef4444"
+  if (g <= 1.75) return "#16a34a"
+  if (g <= 2.5)  return "#f59e0b"
+  return "#f43f5e"
 }
 
 interface Props {
@@ -37,6 +35,7 @@ function resolveOrder(termOrder: string[], savedTerms: Term[]): string[] {
 
 export function AnalyzeModal({ savedTerms, termOrder, totalUnits, currentUnits, onClose, onSaveTotalUnits }: Props) {
   const [editingUnits, setEditingUnits] = useState(false)
+  const [expandedGrade, setExpandedGrade] = useState<number | null>(null)
   const chartData = useMemo(() => {
     const orderedKeys = resolveOrder(termOrder, savedTerms)
     
@@ -91,7 +90,8 @@ export function AnalyzeModal({ savedTerms, termOrder, totalUnits, currentUnits, 
   const breakdown = useMemo(() => {
     const counts: Record<number, number> = {}
     const unitsByGrade: Record<number, number> = {}
-    UP_GRADES.forEach(g => { counts[g] = 0; unitsByGrade[g] = 0 })
+    const subjectsByGrade: Record<number, { code: string; term: string }[]> = {}
+    UP_GRADES.forEach(g => { counts[g] = 0; unitsByGrade[g] = 0; subjectsByGrade[g] = [] })
 
     let total = 0
     let totalUnitsCount = 0
@@ -102,6 +102,7 @@ export function AnalyzeModal({ savedTerms, termOrder, totalUnits, currentUnits, 
         if (match === undefined) continue
         counts[match]++
         unitsByGrade[match] += s.units
+        subjectsByGrade[match].push({ code: s.code, term: term.term })
         total++
         totalUnitsCount += s.units
       }
@@ -115,6 +116,7 @@ export function AnalyzeModal({ savedTerms, termOrder, totalUnits, currentUnits, 
         count: counts[g],
         units: unitsByGrade[g],
         pct: total > 0 ? Math.round((counts[g] / total) * 100) : 0,
+        subjects: subjectsByGrade[g],
       }))
 
     const mostCommon = [...UP_GRADES].filter(g => counts[g] > 0).sort((a, b) => counts[b] - counts[a])[0]
@@ -252,7 +254,7 @@ export function AnalyzeModal({ savedTerms, termOrder, totalUnits, currentUnits, 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="rounded-lg bg-gray-50 border border-gray-100 p-3 text-center">
                     <p className="text-[10px] text-gray-400 uppercase font-medium mb-1">Total Subjects</p>
-                    <p className="text-lg font-bold text-gray-800 tabular-nums">{breakdown.total}</p>
+                    <p className="text-lg font-bold text-upb-green tabular-nums">{breakdown.total}</p>
                     <p className="text-[10px] text-gray-400 mt-0.5">{breakdown.totalUnitsCount} units</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 border border-gray-100 p-3 text-center">
@@ -302,19 +304,36 @@ export function AnalyzeModal({ savedTerms, termOrder, totalUnits, currentUnits, 
                 {/* Detail rows */}
                 <div className="space-y-1.5">
                   {breakdown.rows.map((d) => (
-                    <div key={d.grade} className="flex items-center gap-3">
-                      <span className="w-9 shrink-0 text-[11px] font-semibold tabular-nums text-right" style={{ color: gradeColor(d.gradeNum) }}>
-                        {d.grade}
-                      </span>
-                      <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{ width: `${d.pct}%`, background: gradeColor(d.gradeNum), opacity: 0.75 }}
-                        />
-                      </div>
-                      <span className="w-20 shrink-0 text-[10px] text-gray-500 tabular-nums">
-                        {d.count}× · {d.pct}%
-                      </span>
+                    <div key={d.grade}>
+                      <button
+                        className="flex w-full items-center gap-3 text-left rounded hover:bg-gray-50 transition-colors py-0.5 px-1 -mx-1"
+                        onClick={() => setExpandedGrade(expandedGrade === d.gradeNum ? null : d.gradeNum)}>
+                        <span className="w-9 shrink-0 text-[11px] font-semibold tabular-nums text-right" style={{ color: gradeColor(d.gradeNum) }}>
+                          {d.grade}
+                        </span>
+                        <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${d.pct}%`, background: gradeColor(d.gradeNum), opacity: 0.75 }}
+                          />
+                        </div>
+                        <span className="w-20 shrink-0 text-[10px] text-gray-500 tabular-nums">
+                          {d.count}× · {d.pct}%
+                        </span>
+                        <span className="text-[10px] text-gray-300 shrink-0">
+                          {expandedGrade === d.gradeNum ? "▲" : "▼"}
+                        </span>
+                      </button>
+                      {expandedGrade === d.gradeNum && (
+                        <div className="ml-10 mt-1 mb-1 rounded-md border border-gray-100 bg-gray-50 divide-y divide-gray-100 overflow-hidden">
+                          {d.subjects.map((s, i) => (
+                            <div key={`${s.term}-${s.code}-${i}`} className="flex items-center justify-between px-3 py-1.5 gap-2">
+                              <span className="text-[11px] font-medium text-gray-700 truncate">{s.code}</span>
+                              <span className="text-[10px] text-gray-400 shrink-0 truncate max-w-[10rem]">{s.term}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -329,7 +348,7 @@ export function AnalyzeModal({ savedTerms, termOrder, totalUnits, currentUnits, 
     {editingUnits && (
       <div
         className="pointer-events-auto flex items-center justify-center"
-        style={{ position: "fixed", inset: 0, zIndex: 2147483649, animation: "gwa-fade 0.15s ease-out both" }}>
+        style={{ position: "fixed", inset: 0, zIndex: 2147483649, background: "rgba(0,0,0,0.4)", animation: "gwa-fade 0.15s ease-out both" }}>
         <div
           className="flex flex-col bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden"
           style={{ width: "min(22rem, 92vw)", animation: "gwa-slide-up 0.2s ease-out both" }}>
