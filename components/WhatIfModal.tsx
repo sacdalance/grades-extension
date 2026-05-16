@@ -248,7 +248,7 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
 
           {/* Projected stats */}
           <div className="px-5 py-4 border-b border-gray-100 shrink-0 space-y-3">
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <StatBox
                 label="Units"
                 value={Math.round(projectedUnits).toString()}
@@ -325,6 +325,7 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
           totalUnits={totalUnits}
           onClose={() => setProjectOpen(false)}
           onSaveTotalUnits={onSaveTotalUnits}
+          title="What-If Latin Honor Projection"
         />
       )}
     </>

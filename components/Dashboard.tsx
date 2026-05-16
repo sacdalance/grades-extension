@@ -31,7 +31,7 @@ function StatBox({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function Dashboard({ current, cumulative, savedTerms, termOrder, graduationUnits, onSaveTotalUnits, status, saveState, onSave, onManage }: Props) {
+export function Dashboard({ current, cumulative, graduationUnits, onSaveTotalUnits, status, saveState, onSave, onManage }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [isCollapsing, setIsCollapsing] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
@@ -61,9 +61,9 @@ export function Dashboard({ current, cumulative, savedTerms, termOrder, graduati
   const WIDGET_STYLE: React.CSSProperties = {
     position: "fixed",
     top: "4.5rem",
-    right: "1.25rem",
+    right: "0.5rem",
     zIndex: 2147483647,
-    width: "min(17rem, calc(100vw - 1rem))",
+    width: "min(17rem, calc(100vw - 0.75rem))",
     pointerEvents: "auto",
     animation: isCollapsing 
       ? "gwa-slide-out 0.2s ease-in both"

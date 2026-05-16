@@ -10,6 +10,7 @@ interface Props {
   totalUnits: number
   onClose: () => void
   onSaveTotalUnits: (units: number) => void
+  title?: string
 }
 
 export function SetupScreen({ totalUnits, onSave, onCancel }: { totalUnits: number; onSave: (v: number) => void; onCancel?: () => void }) {
@@ -137,7 +138,7 @@ function ProjectionRow({ p, currentGWA, remainingUnits }: { p: Projection; curre
   )
 }
 
-export function ProjectionModal({ currentGWA, currentUnits, totalUnits, onClose, onSaveTotalUnits }: Props) {
+export function ProjectionModal({ currentGWA, currentUnits, totalUnits, onClose, onSaveTotalUnits, title = "Latin Honor Projection" }: Props) {
   const [editing, setEditing] = useState(false)
 
   const projections = totalUnits > 0 ? calculateProjections(currentGWA, currentUnits, totalUnits) : []
@@ -166,7 +167,7 @@ export function ProjectionModal({ currentGWA, currentUnits, totalUnits, onClose,
           style={{ width: "min(28rem, 92vw)", maxHeight: "82vh", animation: "gwa-slide-up 0.2s ease-out both" }}>
 
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 shrink-0">
-            <h2 className="text-sm font-semibold text-gray-900">Latin Honor Projection</h2>
+            <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
             <div className="flex items-center gap-0.5">
               <Button variant="icon" size="icon" onClick={() => setEditing(true)}>
                 <Settings size={13} />

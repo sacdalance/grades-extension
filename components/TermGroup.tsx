@@ -105,10 +105,10 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
                 </td>
                 <td className="px-1 py-1" style={{ width: "5rem" }}>
                   <Input
-                    type="number" value={s.units} step="0.5" min="0" max="6"
+                    type="number" value={s.units} step="1" min="0" max="6"
                     className="text-xs text-center"
                     onChange={(e) => {
-                      const v = Math.min(6, Math.max(0, parseFloat(e.target.value) || 0))
+                      const v = Math.min(6, Math.max(0, Math.round(parseFloat(e.target.value) || 0)))
                       onUpdateSubject(termKey, idx, { units: v })
                     }}
                   />
