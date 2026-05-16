@@ -1,5 +1,16 @@
 import type { Subject, Term } from "~types"
 
+export function chronoOrder(key: string): number {
+  const yearMatch = key.match(/(\d{4})\s*[-–]\s*\d{4}/)
+  const startYear = yearMatch ? parseInt(yearMatch[1]) : 9999
+  const lower = key.toLowerCase()
+  const semOrder = lower.includes("first") || lower.includes("1st") ? 0
+    : lower.includes("mid") || lower.includes("summer") ? 1
+    : lower.includes("second") || lower.includes("2nd") ? 2
+    : 3
+  return startYear * 10 + semOrder
+}
+
 export function calcTermGWA(subjects: Subject[]): { units: number; gwa: number } {
   let totalUnits = 0
   let totalWeighted = 0
@@ -29,10 +40,10 @@ export function calcCumulativeGWA(terms: Term[]): { units: number; gwa: number }
 export function recalcTerms<T extends Record<string, { subjects: Subject[]; units: number; gwa: number }>>(
   terms: T
 ): T {
-  const result = { ...terms }
+  const result: Record<string, { subjects: Subject[]; units: number; gwa: number }> = { ...terms }
   for (const key of Object.keys(result)) {
     const { units, gwa } = calcTermGWA(result[key].subjects)
     result[key] = { ...result[key], units, gwa }
   }
-  return result
+  return result as T
 }

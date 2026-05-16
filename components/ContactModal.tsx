@@ -33,8 +33,7 @@ export function ContactModal({ onClose }: Props) {
         zIndex: 2147483647,
         background: "rgba(0,0,0,0.4)",
         animation: "gwa-fade 0.15s ease-out both"
-      }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}>
+      }}>
 
       <div
         className="flex flex-col bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden"

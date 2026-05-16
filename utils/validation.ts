@@ -20,10 +20,6 @@ function isValidTermsObject(data: unknown): data is SavedTerms {
   return true
 }
 
-export function isValidSavedTerms(data: unknown): data is SavedTerms {
-  return isValidTermsObject(data)
-}
-
 export function parseImport(data: unknown): { terms: SavedTerms; termOrder?: string[] } | null {
   // New format: { terms: SavedTerms, termOrder: string[] }
   if (typeof data === "object" && data !== null && !Array.isArray(data)) {

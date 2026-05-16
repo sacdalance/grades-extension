@@ -14,12 +14,20 @@ interface Props {
   onAddSubject: (term: string) => Promise<void>
   onDeleteSubject: (term: string, idx: number) => Promise<void>
   onDeleteTerm: (term: string) => void
+  onRenameTerm: (oldKey: string, newKey: string) => Promise<void>
 }
 
-export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDeleteSubject, onDeleteTerm }: Props) {
+export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDeleteSubject, onDeleteTerm, onRenameTerm }: Props) {
   const scholar = getScholarStatus(term.gwa, term.units, term.subjects)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [nameInput, setNameInput] = useState(termKey)
   const pending = useRef(false)
+
+  const commitRename = () => {
+    const trimmed = nameInput.trim()
+    if (trimmed && trimmed !== termKey) onRenameTerm(termKey, trimmed)
+    else setNameInput(termKey)
+  }
 
   const guard = async (fn: () => Promise<void>) => {
     if (pending.current) return
@@ -33,7 +41,14 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
       {/* Term header */}
       <div className="flex items-center gap-2 bg-gray-50 px-4 py-2.5 border-b border-gray-200">
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-semibold text-gray-900 block truncate">{termKey}</span>
+          <Input
+            value={nameInput}
+            maxLength={30}
+            onChange={(e) => setNameInput(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.currentTarget.blur() } else if (e.key === "Escape") { setNameInput(termKey); e.currentTarget.blur() } }}
+            className="text-sm font-semibold text-gray-900 bg-transparent border-none shadow-none px-0 h-auto focus-visible:ring-0 hover:bg-gray-100 focus:bg-white rounded transition-colors"
+          />
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-xs text-gray-400 tabular-nums">{Math.round(term.units)} units</span>
             <span className="text-xs font-semibold text-upb-green tabular-nums">{term.gwa.toFixed(4)} GWA</span>
@@ -149,8 +164,9 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
 
         <button
           onClick={() => guard(() => onAddSubject(termKey))}
-          className="flex w-full items-center gap-1.5 px-4 py-2 text-xs font-medium text-upb-green/60 hover:text-upb-green hover:bg-upb-green/5 border-t border-dashed border-upb-green/20 hover:border-upb-green/40 transition-colors">
-          + Add Subject
+          disabled={term.subjects.length >= 20}
+          className="flex w-full items-center gap-1.5 px-4 py-2 text-xs font-medium text-upb-green/60 hover:text-upb-green hover:bg-upb-green/5 border-t border-dashed border-upb-green/20 hover:border-upb-green/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-upb-green/60 disabled:hover:bg-transparent">
+          {term.subjects.length >= 20 ? "Subject limit reached (20)" : "+ Add Subject"}
         </button>
       </div>
     </div>

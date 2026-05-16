@@ -6,6 +6,7 @@ import { ConfirmModal } from "~components/ConfirmModal"
 import { ShareModal } from "~components/ShareModal"
 import type { SavedTerms, Subject } from "~types"
 import { parseImport } from "~utils/validation"
+import { chronoOrder } from "~utils/calculator"
 
 interface Props {
   savedTerms: SavedTerms
@@ -15,21 +16,12 @@ interface Props {
   onAddSubject: (term: string) => Promise<void>
   onDeleteSubject: (term: string, idx: number) => Promise<void>
   onDeleteTerm: (term: string) => Promise<void>
+  onRenameTerm: (oldKey: string, newKey: string) => Promise<void>
   onCreateTerm: (name: string) => Promise<boolean>
   onSaveOrder: (keys: string[]) => Promise<void>
   onImport: (data: SavedTerms, termOrder?: string[]) => Promise<void>
   onReset: () => Promise<void>
-}
-
-function chronoOrder(key: string) {
-  const yearMatch = key.match(/(\d{4})\s*[-–]\s*\d{4}/)
-  const startYear = yearMatch ? parseInt(yearMatch[1]) : 9999
-  const lower = key.toLowerCase()
-  const semOrder = lower.includes("first") || lower.includes("1st") ? 0
-    : lower.includes("mid") || lower.includes("summer") ? 1
-    : lower.includes("second") || lower.includes("2nd") ? 2
-    : 3
-  return startYear * 10 + semOrder
+  onAnalyze: () => void
 }
 
 function resolveOrder(termOrder: string[], savedTerms: SavedTerms): string[] {
@@ -39,7 +31,7 @@ function resolveOrder(termOrder: string[], savedTerms: SavedTerms): string[] {
   return [...stored, ...added]
 }
 
-export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSubject, onDeleteSubject, onDeleteTerm, onCreateTerm, onSaveOrder, onImport, onReset }: Props) {
+export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSubject, onDeleteSubject, onDeleteTerm, onRenameTerm, onCreateTerm, onSaveOrder, onImport, onReset, onAnalyze }: Props) {
   const [newTerm, setNewTerm] = useState("")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
@@ -102,7 +94,7 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
       setNewTerm("")
       setTimeout(() => setSuccess(""), 3000)
     } else {
-      setError(`"${name}" already exists.`)
+      setError(Object.keys(savedTerms).length >= 20 ? "Maximum of 20 terms reached." : `"${name}" already exists.`)
       setSuccess("")
     }
   }
@@ -183,8 +175,7 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
         zIndex: 2147483647,
         background: "rgba(0,0,0,0.4)",
         animation: "gwa-fade 0.15s ease-out both"
-      }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}>
+      }}>
 
       <div
         className="flex flex-col bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden"
@@ -232,6 +223,7 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
                     onAddSubject={onAddSubject}
                     onDeleteSubject={onDeleteSubject}
                     onDeleteTerm={handleDeleteTerm}
+                    onRenameTerm={onRenameTerm}
                   />
                 </div>
               </div>
@@ -241,9 +233,10 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
 
         {/* Actions row */}
         <div className="border-t border-gray-200 px-5 pt-3 pb-0 flex gap-2 flex-wrap">
-          <Button size="sm" onClick={() => setConfirmExport(true)} disabled={orderedKeys.length === 0}>Export JSON</Button>
+          <Button size="sm" onClick={onAnalyze} disabled={Object.keys(savedTerms).length < 2}>Analyze Trend</Button>
           <Button size="sm" onClick={() => importRef.current?.click()}>Import JSON</Button>
-          <Button size="sm" onClick={() => setShareOpen(true)} disabled={orderedKeys.length === 0}>Share</Button>
+          <Button size="sm" onClick={() => setConfirmExport(true)} disabled={orderedKeys.length === 0}>Export JSON</Button>
+          <Button size="sm" className="bg-gray-900 hover:bg-gray-800 text-white" onClick={() => setShareOpen(true)} disabled={orderedKeys.length === 0}>Share</Button>
           <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImportFile} />
           <Button variant="danger" size="sm" className="ml-auto" onClick={handleReset} disabled={orderedKeys.length === 0}>Reset All</Button>
         </div>
@@ -263,8 +256,8 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
             <Button size="sm" onClick={handleCreate}>Create</Button>
           </div>
           {error && (
-            <div className="rounded-md border border-upb-maroon/20 bg-upb-maroon/5 px-3 py-2">
-              <p className="text-xs text-upb-maroon">{error}</p>
+            <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
+              <p className="text-xs text-gray-400">{error}</p>
             </div>
           )}
           {success && (
@@ -279,8 +272,7 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
     {pendingImport && (
       <div
         className="pointer-events-auto flex items-center justify-center"
-        style={{ position: "fixed", inset: 0, zIndex: 2147483648, background: "rgba(0,0,0,0.35)", animation: "gwa-fade 0.15s ease-out both" }}
-        onClick={(e) => e.target === e.currentTarget && setPendingImport(null)}>
+        style={{ position: "fixed", inset: 0, zIndex: 2147483648, background: "rgba(0,0,0,0.35)", animation: "gwa-fade 0.15s ease-out both" }}>
         <div
           className="flex flex-col bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden"
           style={{ width: "min(28rem, 92vw)", maxHeight: "72vh", animation: "gwa-slide-up 0.2s ease-out both" }}>

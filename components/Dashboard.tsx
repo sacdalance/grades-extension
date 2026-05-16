@@ -4,11 +4,18 @@ import { Button } from "~components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~components/ui/card"
 import { Separator } from "~components/ui/separator"
 import { ContactModal } from "~components/ContactModal"
-import type { CurrentData } from "~types"
+import { ProjectionModal } from "~components/ProjectionModal"
+import { WhatIfModal } from "~components/WhatIfModal"
+import { TermsModal } from "~components/TermsModal"
+import type { CurrentData, Term } from "~types"
 
 interface Props {
   current: CurrentData
   cumulative: { units: number; gwa: number }
+  savedTerms: Record<string, Term>
+  termOrder: string[]
+  graduationUnits: number
+  onSaveTotalUnits: (units: number) => void
   status: string
   saveState: "new" | "saved" | "update"
   onSave: () => void
@@ -24,11 +31,14 @@ function StatBox({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function Dashboard({ current, cumulative, status, saveState, onSave, onManage }: Props) {
+export function Dashboard({ current, cumulative, savedTerms, termOrder, graduationUnits, onSaveTotalUnits, status, saveState, onSave, onManage }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [isCollapsing, setIsCollapsing] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
   const [shouldAnimate, setShouldAnimate] = useState(true)
+  const [projectOpen, setProjectOpen] = useState(false)
+  const [whatIfOpen, setWhatIfOpen] = useState(false)
+  const [termsOpen, setTermsOpen] = useState(false)
 
   const scholar = getScholarStatus(current.gwa, current.units, current.subjects)
   const latinHonor = getLatinHonor(cumulative.gwa)
@@ -84,7 +94,10 @@ export function Dashboard({ current, cumulative, status, saveState, onSave, onMa
 
         <CardHeader className="bg-upb-green px-5 py-3">
           <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-white text-sm tracking-wide">AMIS GWA Calculator</CardTitle>
+            <div className="flex items-center gap-2">
+              <img src={chrome.runtime.getURL("assets/l-logo-white.png")} alt="" className="h-5 w-5 object-contain opacity-90" />
+              <CardTitle className="text-white text-sm tracking-wide">AMIS GWA Calculator</CardTitle>
+            </div>
             <button 
               onClick={handleCollapse} 
               className="h-6 w-6 flex items-center justify-center rounded text-white/70 hover:text-white hover:bg-white/20 transition-colors text-lg leading-none">
@@ -108,7 +121,7 @@ export function Dashboard({ current, cumulative, status, saveState, onSave, onMa
           </div>
         )}
 
-        <CardContent className="space-y-3 pt-3">
+        <CardContent className="space-y-3 pt-3 pb-3">
           {/* Current term */}
           <div className="space-y-2">
             <p className="text-[10px] font-semibold text-upb-maroon uppercase tracking-widest border-l-2 border-upb-maroon pl-2">
@@ -155,8 +168,8 @@ export function Dashboard({ current, cumulative, status, saveState, onSave, onMa
             )}
 
             {current.units === 0 && (
-              <div className="rounded-md border border-upb-maroon/20 bg-upb-maroon/5 px-3 py-2">
-                <p className="text-xs text-upb-maroon">{status}</p>
+              <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
+                <p className="text-xs text-gray-400">{status}</p>
               </div>
             )}
           </div>
@@ -200,22 +213,57 @@ export function Dashboard({ current, cumulative, status, saveState, onSave, onMa
           </div>
         </CardContent>
 
-        <CardFooter className="flex-col gap-1.5 pt-0">
-          <Separator className="mb-1" />
+        <CardFooter className="flex-col pt-0 pb-5 px-5">
           <div className="flex w-full gap-2">
-            <Button className="flex-1" onClick={onManage}>
+            <Button className="flex-1 bg-upb-green hover:bg-upb-green/90 h-10 shadow-sm font-semibold" onClick={() => setProjectOpen(true)} disabled={cumulative.gwa === 0}>
+              Project Latin Honors
+            </Button>
+            <Button className="h-10 px-3 shrink-0 bg-gray-900 hover:bg-gray-800 text-white" onClick={() => setWhatIfOpen(true)} disabled={cumulative.gwa === 0}>
+              What-If
+            </Button>
+          </div>
+
+          <div className="w-full h-px bg-gray-100 my-3" />
+
+          <div className="flex w-full gap-3">
+            <Button className="flex-1" variant="secondary" onClick={onManage}>
               Manage Data
             </Button>
-            <Button className="flex-1" onClick={() => setContactOpen(true)}>
+            <Button className="flex-1" variant="secondary" onClick={() => setContactOpen(true)}>
               Contact
             </Button>
           </div>
-          <p className="text-[10px] text-gray-400 text-center w-full mt-1">
-            Unofficial. INC/DRP may not reflect. Verify with OUR.
+
+          <p className="text-[10px] text-gray-400 text-center w-full mt-3 px-2 leading-relaxed">
+            Unofficial estimate. INC/DRP may not reflect correctly.
+            Always verify with the OUR.{" "}
+            <button onClick={() => setTermsOpen(true)} className="underline hover:text-gray-600 transition-colors">Terms of Use</button>
           </p>
         </CardFooter>
       </Card>
+      
       {contactOpen && <ContactModal onClose={() => setContactOpen(false)} />}
+      {termsOpen && <TermsModal onClose={() => setTermsOpen(false)} />}
+
+      {whatIfOpen && (
+        <WhatIfModal
+          currentGWA={cumulative.gwa}
+          currentUnits={cumulative.units}
+          totalUnits={graduationUnits}
+          onSaveTotalUnits={onSaveTotalUnits}
+          onClose={() => setWhatIfOpen(false)}
+        />
+      )}
+      
+      {projectOpen && (
+        <ProjectionModal
+          currentGWA={cumulative.gwa}
+          currentUnits={cumulative.units}
+          totalUnits={graduationUnits}
+          onClose={() => setProjectOpen(false)}
+          onSaveTotalUnits={onSaveTotalUnits}
+        />
+      )}
     </div>
   )
 }

@@ -563,8 +563,8 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
         }
       }
 
-      // Draw footer relative to centered content
-      const footerY = y + contentH + 8 * S
+      // Draw footer below the last drawn element
+      const footerY = y + 8 * S
       ctx.strokeStyle = "rgba(255,255,255,0.12)"
       ctx.lineWidth = S
       ctx.beginPath(); ctx.moveTo(CPAD, footerY); ctx.lineTo(CW - CPAD, footerY); ctx.stroke()
@@ -621,8 +621,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
   return (
     <div
       className="pointer-events-auto flex items-center justify-center"
-      style={{ position: "fixed", inset: 0, zIndex: 2147483648, background: "rgba(0,0,0,0.5)", animation: "gwa-fade 0.15s ease-out both" }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}>
+      style={{ position: "fixed", inset: 0, zIndex: 2147483648, background: "rgba(0,0,0,0.5)", animation: "gwa-fade 0.15s ease-out both" }}>
 
       <div
         className="flex flex-col bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden"

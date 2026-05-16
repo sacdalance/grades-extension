@@ -1,8 +1,8 @@
 {
-  "name": "upb-amis-gwa-calculator",
-  "displayName": "UPB AMIS GWA Calculator",
-  "version": "2.0.0",
-  "description": "Calculates GWA automatically on the UPB AMIS portal.",
+  "name": "amis-gwa-calculator",
+  "displayName": "AMIS GWA Calculator",
+  "version": "1.67.0",
+  "description": "Calculates GWA automatically on the AMIS portal.",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
@@ -20,6 +20,7 @@
     "plasmo": "^0.90.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "recharts": "^3.8.1",
     "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
@@ -39,8 +40,13 @@
     "host_permissions": [],
     "web_accessible_resources": [
       {
-        "resources": ["assets/inter.woff2"],
-        "matches": ["<all_urls>"]
+        "resources": [
+          "assets/inter.woff2",
+          "assets/l-logo-white.png"
+        ],
+        "matches": [
+          "<all_urls>"
+        ]
       }
     ]
   }

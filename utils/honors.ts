@@ -44,3 +44,67 @@ export function displayScholar(status: ScholarStatus): string {
 export function displayLatin(honor: LatinHonor): string {
   return honor ? `On Track for ${honor}` : ""
 }
+
+// ─── Latin honor projection (based on remaining units) ────────────────────────
+export type ProjectionStatus = "guaranteed" | "possible" | "impossible"
+export type Difficulty = "easy" | "moderate" | "hard" | "extreme" | null
+
+export interface Projection {
+  tier: NonNullable<LatinHonor>
+  target: number
+  requiredGWA: number | null  // null when no remaining units
+  status: ProjectionStatus
+  difficulty: Difficulty
+}
+
+const TIERS: Array<{ tier: NonNullable<LatinHonor>; target: number }> = [
+  { tier: "Summa Cum Laude", target: 1.20 },
+  { tier: "Magna Cum Laude", target: 1.45 },
+  { tier: "Cum Laude",       target: 1.75 },
+]
+
+export function calculateProjections(
+  currentGWA: number,
+  currentUnits: number,
+  totalUnits: number
+): Projection[] {
+  const remainingUnits = Math.max(0, totalUnits - currentUnits)
+  return TIERS.map(({ tier, target }) => {
+    if (remainingUnits <= 0) {
+      return { tier, target, requiredGWA: null, status: currentGWA <= target ? "guaranteed" : "impossible", difficulty: null }
+    }
+    const requiredGWA = (target * totalUnits - currentGWA * currentUnits) / remainingUnits
+    
+    let status: ProjectionStatus = "possible"
+    let difficulty: Difficulty = null
+
+    if (requiredGWA > 3.00) {
+      status = "guaranteed"
+    } else if (requiredGWA < 1.00) {
+      status = "impossible"
+    } else {
+      status = "possible"
+      // Difficulty based on required average
+      if (requiredGWA >= 2.00) difficulty = "easy"
+      else if (requiredGWA >= 1.50) difficulty = "moderate"
+      else if (requiredGWA >= 1.25) difficulty = "hard"
+      else difficulty = "extreme"
+    }
+
+    return { tier, target, requiredGWA, status, difficulty }
+  })
+}
+
+/**
+ * Calculates the final GWA if the student gets a specific average for all remaining units.
+ */
+export function estimateFinalGWA(
+  currentGWA: number,
+  currentUnits: number,
+  totalUnits: number,
+  futureAvg: number
+): number {
+  const remainingUnits = Math.max(0, totalUnits - currentUnits)
+  if (totalUnits <= 0) return currentGWA
+  return (currentGWA * currentUnits + futureAvg * remainingUnits) / totalUnits
+}

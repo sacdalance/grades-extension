@@ -3,12 +3,21 @@ import { useStorage } from "@plasmohq/storage/hook"
 import { Storage } from "@plasmohq/storage" // used by handleReset
 import { Dashboard } from "~components/Dashboard"
 import { Modal } from "~components/Modal"
+import { AnalyzeModal } from "~components/AnalyzeModal"
+import { TermsModal } from "~components/TermsModal"
 import { useGradeScanner } from "~hooks/useGradeScanner"
 import type { SavedTerms, Subject } from "~types"
 import { calcCumulativeGWA, recalcTerms } from "~utils/calculator"
 
 export function App() {
   const [modalOpen, setModalOpen] = useState(false)
+  const [analyzeOpen, setAnalyzeOpen] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useStorage<boolean>("termsAccepted", (v) =>
+    v === undefined ? false : v
+  )
+  const [graduationUnits, setGraduationUnits] = useStorage<number>("graduationUnits", (v) =>
+    v === undefined ? 0 : v
+  )
 
   const [savedTerms, setSavedTerms] = useStorage<SavedTerms>("savedTerms", (v) =>
     v === undefined ? {} : v
@@ -50,10 +59,21 @@ export function App() {
     }
   }
 
-  const handleCreateTerm = async (name: string): Promise<boolean> => {
+  const handleCreateTerm = async (name: string) => {
     if (savedTermsRef.current[name]) return false
+    if (Object.keys(savedTermsRef.current).length >= 20) return false
     await persist({ ...savedTermsRef.current, [name]: { term: name, units: 0, gwa: 0, subjects: [] } })
+    await setTermOrder([...(termOrder ?? []), name])
     return true
+  }
+
+  const handleRenameTerm = async (oldKey: string, newKey: string) => {
+    const current = savedTermsRef.current
+    if (!current[oldKey] || current[newKey]) return
+    const updated = { ...current, [newKey]: { ...current[oldKey], term: newKey } }
+    delete updated[oldKey]
+    await persist(updated)
+    await setTermOrder((termOrder ?? []).map(k => k === oldKey ? newKey : k))
   }
 
   const handleDeleteTerm = async (termKey: string) => {
@@ -97,6 +117,7 @@ export function App() {
 
   const handleAddSubject = async (termKey: string) => {
     const terms = { ...savedTermsRef.current }
+    if (terms[termKey].subjects.length >= 20) return
     terms[termKey] = {
       ...terms[termKey],
       subjects: [...terms[termKey].subjects, { code: "New Subject", units: 3, grade: 1.0 }]
@@ -118,6 +139,10 @@ export function App() {
       <Dashboard
         current={current}
         cumulative={cumulative}
+        savedTerms={savedTerms}
+        termOrder={termOrder ?? []}
+        graduationUnits={graduationUnits ?? 0}
+        onSaveTotalUnits={async (v) => { await setGraduationUnits(v) }}
         status={status}
         saveState={saveState}
         onSave={handleSave}
@@ -132,11 +157,27 @@ export function App() {
           onAddSubject={handleAddSubject}
           onDeleteSubject={handleDeleteSubject}
           onDeleteTerm={handleDeleteTerm}
+          onRenameTerm={handleRenameTerm}
           onCreateTerm={handleCreateTerm}
           onSaveOrder={handleSaveOrder}
           onImport={handleImport}
           onReset={handleReset}
+          onAnalyze={() => setAnalyzeOpen(true)}
         />
+      )}
+
+      {analyzeOpen && (
+        <AnalyzeModal
+          savedTerms={Object.values(terms)}
+          termOrder={termOrder ?? []}
+          totalUnits={graduationUnits ?? 0}
+          currentUnits={cumulative.units}
+          onClose={() => setAnalyzeOpen(false)}
+          onSaveTotalUnits={async (v) => { await setGraduationUnits(v) }}
+        />
+      )}
+      {termsAccepted === false && (
+        <TermsModal onClose={() => setTermsAccepted(true)} />
       )}
     </>
   )
