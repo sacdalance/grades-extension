@@ -4,6 +4,7 @@ import { Input } from "~components/ui/input"
 import { TermGroup } from "~components/TermGroup"
 import { ConfirmModal } from "~components/ConfirmModal"
 import { ShareModal } from "~components/ShareModal"
+import { PdfModal } from "~components/PdfModal"
 import type { SavedTerms, Subject } from "~types"
 import { parseImport } from "~utils/validation"
 import { chronoOrder } from "~utils/calculator"
@@ -17,7 +18,7 @@ interface Props {
   onDeleteSubject: (term: string, idx: number) => Promise<void>
   onDeleteTerm: (term: string) => Promise<void>
   onRenameTerm: (oldKey: string, newKey: string) => Promise<void>
-  onCreateTerm: (name: string) => Promise<boolean>
+  onCreateTerm: (name: string, subjectCount?: number) => Promise<boolean>
   onSaveOrder: (keys: string[]) => Promise<void>
   onImport: (data: SavedTerms, termOrder?: string[]) => Promise<void>
   onReset: () => Promise<void>
@@ -45,6 +46,8 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
     newCount: number
   } | null>(null)
   const [shareOpen, setShareOpen] = useState(false)
+  const [pdfOpen, setPdfOpen] = useState(false)
+  const [subjectCount, setSubjectCount] = useState(1)
   const [orderedKeys, setOrderedKeys] = useState<string[]>(() => resolveOrder(termOrder, savedTerms))
 
   const listRef = useRef<HTMLDivElement>(null)
@@ -87,11 +90,12 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
 
   const doCreate = async () => {
     const name = newTerm.trim()
-    const ok = await onCreateTerm(name)
+    const ok = await onCreateTerm(name, subjectCount)
     if (ok) {
       setSuccess(`"${name}" added.`)
       setError("")
       setNewTerm("")
+      setSubjectCount(1)
       setTimeout(() => setSuccess(""), 3000)
     } else {
       setError(Object.keys(savedTerms).length >= 20 ? "Maximum of 20 terms reached." : `"${name}" already exists.`)
@@ -237,6 +241,7 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
           <Button size="sm" onClick={() => importRef.current?.click()}>Import</Button>
           <Button size="sm" onClick={() => setConfirmExport(true)} disabled={orderedKeys.length === 0}>Export</Button>
           <Button size="sm" className="bg-gray-900 hover:bg-gray-800 text-white" onClick={() => setShareOpen(true)} disabled={orderedKeys.length === 0}>Share</Button>
+          <Button size="sm" variant="secondary" onClick={() => setPdfOpen(true)} disabled={orderedKeys.length === 0}>PDF</Button>
           <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImportFile} />
           <Button variant="danger" size="sm" className="ml-auto" onClick={handleReset} disabled={orderedKeys.length === 0}>Reset All</Button>
         </div>
@@ -325,6 +330,14 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
       />
     )}
 
+    {pdfOpen && (
+      <PdfModal
+        savedTerms={savedTerms}
+        termOrder={orderedKeys}
+        onClose={() => setPdfOpen(false)}
+      />
+    )}
+
     {confirmExport && (
       <ConfirmModal
         message="Export all saved grades as a JSON file?"
@@ -335,12 +348,33 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
     )}
 
     {confirmCreate && (
-      <ConfirmModal
-        message={`Create term "${newTerm.trim()}"?`}
-        confirmLabel="Create"
-        onConfirm={() => { setConfirmCreate(false); doCreate() }}
-        onCancel={() => setConfirmCreate(false)}
-      />
+      <div
+        className="pointer-events-auto flex items-center justify-center"
+        style={{ position: "fixed", inset: 0, zIndex: 2147483648, background: "rgba(0,0,0,0.4)", animation: "gwa-fade 0.15s ease-out both" }}>
+        <div
+          className="bg-white rounded-lg border border-gray-200 shadow-lg px-5 py-4 space-y-4"
+          style={{ width: "min(20rem, 92vw)", animation: "gwa-slide-up 0.2s ease-out both" }}>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-gray-800">Create term "{newTerm.trim()}"?</p>
+            <p className="text-[11px] text-gray-400">How many subjects to start with?</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              min={0}
+              max={20}
+              value={subjectCount}
+              onChange={(e) => setSubjectCount(Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))}
+              className="w-20 h-8 rounded-md border border-gray-200 bg-gray-50 px-3 text-sm text-gray-800 text-center focus:outline-none focus:border-upb-green/40 focus:ring-1 focus:ring-upb-green/20"
+            />
+            <span className="text-xs text-gray-400">subjects (0–20)</span>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="secondary" size="sm" onClick={() => setConfirmCreate(false)}>Cancel</Button>
+            <Button size="sm" onClick={() => { setConfirmCreate(false); doCreate() }}>Create</Button>
+          </div>
+        </div>
+      </div>
     )}
 
     {confirmReset && (

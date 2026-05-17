@@ -31,7 +31,7 @@ export function SetupScreen({ totalUnits, onSave, onCancel }: { totalUnits: numb
           min={1}
           max={250}
           placeholder="e.g. 160"
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => { const n = parseInt(e.target.value); setInput(n > 250 ? "250" : e.target.value) }}
           onKeyDown={(e) => e.key === "Enter" && valid && onSave(parsed)}
           className="w-full h-8 rounded-md border border-gray-200 bg-gray-50 px-3 text-sm text-gray-800 focus:outline-none focus:border-upb-green/40 focus:ring-1 focus:ring-upb-green/20 hover:border-gray-300"
         />

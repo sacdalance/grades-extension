@@ -204,6 +204,9 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
   ])
   const [newTermName, setNewTermName] = useState("")
   const [projectOpen, setProjectOpen] = useState(false)
+  const [subjectPrompt, setSubjectPrompt] = useState(false)
+  const [pendingTermName, setPendingTermName] = useState("")
+  const [pendingSubjectCount, setPendingSubjectCount] = useState(1)
 
   const addedUnits = terms.reduce((sum, t) => sum + termGWA(t.subjects).units, 0)
   const addedPoints = terms.reduce((sum, t) => {
@@ -215,11 +218,19 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
     ? (currentGWA * currentUnits + addedPoints) / projectedUnits
     : 0
 
-  const createTerm = () => {
+  const openSubjectPrompt = () => {
     if (terms.length >= 20) return
-    const name = newTermName.trim() || `Hypothetical Term ${terms.length + 1}`
-    setTerms(prev => [...prev, { id: nextTid(), name, subjects: [makeSubject(nextSid())] }])
+    setPendingTermName(newTermName.trim() || `Hypothetical Term ${terms.length + 1}`)
+    setPendingSubjectCount(1)
+    setSubjectPrompt(true)
+  }
+
+  const confirmCreate = () => {
+    const name = pendingTermName
+    const subjects = Array.from({ length: pendingSubjectCount }, () => makeSubject(nextSid()))
+    setTerms(prev => [...prev, { id: nextTid(), name, subjects }])
     setNewTermName("")
+    setSubjectPrompt(false)
   }
 
   const updateTerm = (id: number, updated: WTerm) => {
@@ -310,13 +321,43 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
                 value={newTermName}
                 maxLength={30}
                 onChange={(e) => setNewTermName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && createTerm()}
+                onKeyDown={(e) => e.key === "Enter" && openSubjectPrompt()}
               />
-              <Button size="sm" onClick={createTerm} disabled={terms.length >= 20}>Create</Button>
+              <Button size="sm" onClick={openSubjectPrompt} disabled={terms.length >= 20}>Create</Button>
             </div>
           </div>
         </div>
       </div>
+
+      {subjectPrompt && (
+        <div
+          className="pointer-events-auto flex items-center justify-center"
+          style={{ position: "fixed", inset: 0, zIndex: 2147483649, background: "rgba(0,0,0,0.4)", animation: "gwa-fade 0.15s ease-out both" }}>
+          <div
+            className="bg-white rounded-lg border border-gray-200 shadow-lg px-5 py-4 space-y-4"
+            style={{ width: "min(20rem, 92vw)", animation: "gwa-slide-up 0.2s ease-out both" }}>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-800">Create term "{pendingTermName}"?</p>
+              <p className="text-[11px] text-gray-400">How many subjects to start with?</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={pendingSubjectCount}
+                onChange={(e) => setPendingSubjectCount(Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))}
+                className="w-20 h-8 rounded-md border border-gray-200 bg-gray-50 px-3 text-sm text-gray-800 text-center focus:outline-none focus:border-upb-green/40 focus:ring-1 focus:ring-upb-green/20"
+              />
+              <span className="text-xs text-gray-400">subjects (0–20)</span>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="secondary" size="sm" onClick={() => setSubjectPrompt(false)}>Cancel</Button>
+              <Button size="sm" onClick={confirmCreate}>Create</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {projectOpen && (
         <ProjectionModal

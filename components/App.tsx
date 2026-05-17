@@ -59,10 +59,11 @@ export function App() {
     }
   }
 
-  const handleCreateTerm = async (name: string) => {
+  const handleCreateTerm = async (name: string, subjectCount = 0) => {
     if (savedTermsRef.current[name]) return false
     if (Object.keys(savedTermsRef.current).length >= 20) return false
-    await persist({ ...savedTermsRef.current, [name]: { term: name, units: 0, gwa: 0, subjects: [] } })
+    const subjects = Array.from({ length: Math.min(subjectCount, 20) }, () => ({ code: "New Subject", units: 3, grade: 1.0 }))
+    await persist({ ...savedTermsRef.current, [name]: { term: name, units: 0, gwa: 0, subjects } })
     await setTermOrder([...(termOrder ?? []), name])
     return true
   }
