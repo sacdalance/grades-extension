@@ -7,7 +7,8 @@ import { AnalyzeModal } from "~components/AnalyzeModal"
 import { TermsModal } from "~components/TermsModal"
 import { useGradeScanner } from "~hooks/useGradeScanner"
 import type { SavedTerms, Subject } from "~types"
-import { calcCumulativeGWA, recalcTerms } from "~utils/calculator"
+import { calcCumulativeGWA, recalcTerms, chronoOrder } from "~utils/calculator"
+import { scanAllTerms } from "~utils/scanner"
 
 export function App() {
   const [modalOpen, setModalOpen] = useState(false)
@@ -126,6 +127,25 @@ export function App() {
     await persist(terms)
   }
 
+  const handleScanAll = async (
+    onProgress: (current: string, done: number, total: number) => void
+  ): Promise<import("~types").CurrentData[]> => {
+    return await scanAllTerms(onProgress)
+  }
+
+  const handleSaveScan = async (results: import("~types").CurrentData[]): Promise<number> => {
+    if (results.length === 0) return 0
+    const newTerms = { ...savedTermsRef.current }
+    const newOrder = [...(termOrder ?? [])]
+    for (const data of results) {
+      if (!newTerms[data.term]) newOrder.push(data.term)
+      newTerms[data.term] = { term: data.term, units: data.units, gwa: data.gwa, subjects: data.subjects }
+    }
+    await persist(newTerms)
+    await setTermOrder(newOrder.sort((a, b) => chronoOrder(a) - chronoOrder(b)))
+    return results.length
+  }
+
   const handleDeleteSubject = async (termKey: string, idx: number) => {
     const terms = { ...savedTermsRef.current }
     terms[termKey] = {
@@ -140,14 +160,15 @@ export function App() {
       <Dashboard
         current={current}
         cumulative={cumulative}
-        savedTerms={savedTerms}
-        termOrder={termOrder ?? []}
+        savedTerms={terms}
         graduationUnits={graduationUnits ?? 0}
         onSaveTotalUnits={async (v) => { await setGraduationUnits(v) }}
         status={status}
         saveState={saveState}
         onSave={handleSave}
         onManage={() => setModalOpen(true)}
+        onScanAll={handleScanAll}
+        onSaveScan={handleSaveScan}
       />
       {modalOpen && (
         <Modal

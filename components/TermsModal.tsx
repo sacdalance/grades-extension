@@ -53,9 +53,9 @@ export function TermsModal({ onClose }: Props) {
           </div>
 
           <div>
-            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">3. Read-Only Page Access</p>
+            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">3. Page Access</p>
             <p>
-              The extension reads grade information displayed on the AMIS portal solely to compute your GWA on-screen. It does not modify, submit, or interact with any form or system on the portal. Your AMIS credentials and active session are never accessed or stored by this extension.
+              The extension reads grade information displayed on the AMIS portal solely to compute your GWA. The optional Scan AMIS feature automates what a user would do manually — it navigates the grades dropdown to cycle through your terms and read the grades table for each one. At no point does the extension modify, submit, or send any data through the portal. Your AMIS credentials and active session are never accessed or stored by this extension.
             </p>
           </div>
 

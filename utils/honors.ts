@@ -18,7 +18,7 @@ export function getScholarStatus(
   // means no grade worse than 3.00, i.e., no grade > 3.00.
   const hasLowGrade = subjects.some((s) => s.grade > 3.0)
   if (hasLowGrade) {
-    return { status: null, disqualified: true, reason: "Grade below 3.00 found" }
+    return { status: null, disqualified: true, reason: "A grade exceeds 3.00" }
   }
   if (gwa > 0 && gwa <= 1.45) return { status: "University Scholar", disqualified: false }
   if (gwa > 0 && gwa <= 1.75) return { status: "College Scholar", disqualified: false }

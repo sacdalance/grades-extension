@@ -8,17 +8,12 @@ const EMPTY: CurrentData = { units: 0, gwa: 0, term: "Unknown Term", subjects: [
 
 export function useGradeScanner() {
   const [data, setData] = useState<CurrentData>(EMPTY)
-  const [status, setStatus] = useState("Scanning...")
+  const [status, setStatus] = useState("")
 
   useEffect(() => {
     const scan = () => {
       const result = scanGradesFromPage()
-      if (result) {
-        setData(result)
-        setStatus(`Term: ${result.term}`)
-      } else {
-        setStatus("No grades table found.")
-      }
+      if (result) setData(result)
     }
 
     scan()

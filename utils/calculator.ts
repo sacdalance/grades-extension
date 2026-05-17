@@ -5,8 +5,8 @@ export function chronoOrder(key: string): number {
   const startYear = yearMatch ? parseInt(yearMatch[1]) : 9999
   const lower = key.toLowerCase()
   const semOrder = lower.includes("first") || lower.includes("1st") ? 0
-    : lower.includes("mid") || lower.includes("summer") ? 1
-    : lower.includes("second") || lower.includes("2nd") ? 2
+    : lower.includes("second") || lower.includes("2nd") ? 1
+    : lower.includes("mid") || lower.includes("summer") ? 2
     : 3
   return startYear * 10 + semOrder
 }

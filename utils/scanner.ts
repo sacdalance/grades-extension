@@ -1,5 +1,82 @@
 import type { CurrentData } from "~types"
 
+const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
+
+export async function scanAllTerms(
+  onProgress: (current: string, done: number, total: number) => void
+): Promise<CurrentData[]> {
+  // Click the Grades tab if not already on it
+  const gradesTab = Array.from(document.querySelectorAll<HTMLElement>("a, button, li"))
+    .find(el => el.textContent?.trim() === "Grades")
+  if (gradesTab) {
+    gradesTab.click()
+    await sleep(1500)
+  }
+
+  const searchEl = document.querySelector<HTMLInputElement>(".vs__search")
+  if (!searchEl) return []
+
+  const typeIntoSearch = async (text: string) => {
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set
+    setter?.call(searchEl, text)
+    searchEl.dispatchEvent(new Event("input", { bubbles: true }))
+    await sleep(500)
+  }
+
+  const getOptions = () =>
+    Array.from(document.querySelectorAll<HTMLElement>(".vs__dropdown-option"))
+      .map(o => o.textContent?.trim() ?? "").filter(Boolean)
+
+  // Focus the search input
+  searchEl.focus()
+  await sleep(300)
+
+  // Search for all common term keywords to discover all available terms
+  const discovered = new Set<string>()
+  for (const keyword of ["first", "second", "mid"]) {
+    await typeIntoSearch(keyword)
+    getOptions().forEach(t => discovered.add(t))
+  }
+
+  // Clear search
+  await typeIntoSearch("")
+
+  const termNames = Array.from(discovered)
+  const total = termNames.length
+  if (total === 0) return []
+
+  const results: CurrentData[] = []
+
+  for (let i = 0; i < total; i++) {
+    const termName = termNames[i]
+    onProgress(termName, i, total)
+
+    // Type enough to find this specific term
+    searchEl.focus()
+    await sleep(200)
+    await typeIntoSearch(termName.split(" ")[0])  // e.g. "First", "Second", "Midyear"
+
+    const target = Array.from(
+      document.querySelectorAll<HTMLElement>(".vs__dropdown-option")
+    ).find(o => o.textContent?.trim() === termName)
+
+    if (!target) continue
+    target.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))
+    target.click()
+
+    // Wait for grades table to load
+    await sleep(2000)
+
+    const data = scanGradesFromPage()
+    if (data && data.subjects.length > 0) {
+      results.push({ ...data, term: termName })
+    }
+  }
+
+  onProgress("", total, total)
+  return results
+}
+
 function getCurrentTerm(): string {
   const selected = document.querySelector(".vs__selected")
   if (selected) return selected.textContent?.trim() ?? "Unknown Term"

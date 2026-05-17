@@ -35,9 +35,9 @@ This extension does not collect, transmit, store, or share any of your personal 
 
 All data you enter, including your grades, term names, subjects, and program settings, is stored exclusively on your own device using your browser's built-in local extension storage. This data never leaves your device. Uninstalling the extension permanently removes all stored data.
 
-### 3. Read-Only Page Access
+### 3. Page Access
 
-The extension reads grade information displayed on the AMIS portal solely to compute your GWA on-screen. It does not modify, submit, or interact with any form or system on the portal. Your AMIS credentials and active session are never accessed or stored by this extension.
+The extension reads grade information displayed on the AMIS portal solely to compute your GWA. The optional Scan AMIS feature automates what a user would do manually — it navigates the grades dropdown to cycle through your terms and read the grades table for each one. At no point does the extension modify, submit, or send any data through the portal. Your AMIS credentials and active session are never accessed or stored by this extension.
 
 ### 4. Accuracy Disclaimer
 

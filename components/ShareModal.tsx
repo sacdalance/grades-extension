@@ -16,7 +16,7 @@ const BLACK = "#000000"
 
 function gradeColor(grade: number): string {
   if (grade <= 1.75) return GREEN_LIGHT
-  if (grade <= 3.00) return GREEN_DARK
+  if (grade <= 3.0) return GREEN_DARK
   return BLACK
 }
 

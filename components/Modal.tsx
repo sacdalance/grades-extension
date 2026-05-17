@@ -34,7 +34,6 @@ function resolveOrder(termOrder: string[], savedTerms: SavedTerms): string[] {
 
 export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSubject, onDeleteSubject, onDeleteTerm, onRenameTerm, onCreateTerm, onSaveOrder, onImport, onReset, onAnalyze }: Props) {
   const [newTerm, setNewTerm] = useState("")
-  const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [confirmReset, setConfirmReset] = useState(false)
   const [confirmCreate, setConfirmCreate] = useState(false)
@@ -48,6 +47,8 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
   const [shareOpen, setShareOpen] = useState(false)
   const [pdfOpen, setPdfOpen] = useState(false)
   const [subjectCount, setSubjectCount] = useState(1)
+  const [noDataMsg, setNoDataMsg] = useState<string | null>(null)
+  const [createError, setCreateError] = useState<string | null>(null)
   const [orderedKeys, setOrderedKeys] = useState<string[]>(() => resolveOrder(termOrder, savedTerms))
 
   const listRef = useRef<HTMLDivElement>(null)
@@ -79,12 +80,11 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
   })
 
   const handleCreate = () => {
-    if (!newTerm.trim()) {
-      setError("Please enter a term name.")
-      setSuccess("")
-      return
-    }
-    setError("")
+    const name = newTerm.trim()
+    if (!name) { setCreateError("Please enter a term name."); return }
+    if (name.length < 5) { setCreateError("Term name must be at least 5 characters."); return }
+    if (Object.keys(savedTerms).length >= 20) { setCreateError("Maximum of 20 terms reached."); return }
+    if (savedTerms[name]) { setCreateError(`"${name}" already exists.`); return }
     setConfirmCreate(true)
   }
 
@@ -93,22 +93,16 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
     const ok = await onCreateTerm(name, subjectCount)
     if (ok) {
       setSuccess(`"${name}" added.`)
-      setError("")
       setNewTerm("")
       setSubjectCount(1)
       setTimeout(() => setSuccess(""), 3000)
     } else {
-      setError(Object.keys(savedTerms).length >= 20 ? "Maximum of 20 terms reached." : `"${name}" already exists.`)
-      setSuccess("")
+      setCreateError(Object.keys(savedTerms).length >= 20 ? "Maximum of 20 terms reached." : `"${name}" already exists.`)
     }
   }
 
   const handleReset = () => {
     setConfirmReset(true)
-  }
-
-  const handleDeleteTerm = async (term: string) => {
-    await onDeleteTerm(term)
   }
 
   const move = async (idx: number, dir: -1 | 1) => {
@@ -138,7 +132,7 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.name.endsWith(".json") && file.type !== "application/json") {
-      setError("Only .json files are accepted.")
+      setCreateError("Only .json files are accepted.")
       return
     }
     const reader = new FileReader()
@@ -152,9 +146,8 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
           .map(k => ({ key: k, oldGwa: savedTerms[k].gwa, newGwa: data[k].gwa }))
         const newCount = Object.keys(data).filter(k => !savedTerms[k]).length
         setPendingImport({ data, termOrder: importedOrder, conflicts, newCount })
-        setError("")
       } catch {
-        setError("Invalid file. Must be a valid GWA grades JSON export.")
+        setCreateError("Invalid file. Must be a valid GWA grades JSON export.")
       }
     }
     reader.readAsText(file)
@@ -199,7 +192,7 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
         <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3">
           {orderedKeys.length === 0 ? (
             <p className="py-10 text-center text-sm text-gray-400">
-              No saved terms yet. Save a term from the calculator widget.
+              No saved terms yet. Use Save Term or Scan AMIS to get started.
             </p>
           ) : (
             orderedKeys.filter(key => !!savedTerms[key]).map((key, idx, visible) => (
@@ -226,7 +219,7 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
                     onUpdateSubject={onUpdateSubject}
                     onAddSubject={onAddSubject}
                     onDeleteSubject={onDeleteSubject}
-                    onDeleteTerm={handleDeleteTerm}
+                    onDeleteTerm={onDeleteTerm}
                     onRenameTerm={onRenameTerm}
                   />
                 </div>
@@ -236,14 +229,18 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
         </div>
 
         {/* Actions row */}
-        <div className="border-t border-gray-200 px-5 pt-3 pb-0 flex gap-2 flex-wrap">
-          <Button size="sm" onClick={onAnalyze} disabled={Object.keys(savedTerms).length < 2}>Analyze</Button>
-          <Button size="sm" onClick={() => importRef.current?.click()}>Import</Button>
-          <Button size="sm" onClick={() => setConfirmExport(true)} disabled={orderedKeys.length === 0}>Export</Button>
-          <Button size="sm" className="bg-gray-900 hover:bg-gray-800 text-white" onClick={() => setShareOpen(true)} disabled={orderedKeys.length === 0}>Share</Button>
-          <Button size="sm" variant="secondary" onClick={() => setPdfOpen(true)} disabled={orderedKeys.length === 0}>PDF</Button>
+        <div className="border-t border-gray-200 px-5 pt-3 pb-0 flex items-center justify-between gap-2">
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => Object.keys(savedTerms).length < 2 ? setNoDataMsg("You need at least 2 saved terms to use Analyze.") : onAnalyze()}>Analyze</Button>
+            <Button size="sm" onClick={() => orderedKeys.length === 0 ? setNoDataMsg("No saved terms to share. Save a term first.") : setShareOpen(true)}>Share</Button>
+            <Button size="sm" onClick={() => orderedKeys.length === 0 ? setNoDataMsg("No saved terms to export as PDF. Save a term first.") : setPdfOpen(true)}>PDF</Button>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="secondary" onClick={() => importRef.current?.click()}>Import</Button>
+            <Button size="sm" variant="secondary" onClick={() => orderedKeys.length === 0 ? setNoDataMsg("No saved terms to export. Save a term first.") : setConfirmExport(true)}>Export</Button>
+            <Button variant="danger" size="sm" onClick={() => orderedKeys.length === 0 ? setNoDataMsg("No saved terms to reset.") : handleReset()}>Reset All</Button>
+          </div>
           <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImportFile} />
-          <Button variant="danger" size="sm" className="ml-auto" onClick={handleReset} disabled={orderedKeys.length === 0}>Reset All</Button>
         </div>
 
         {/* Add term */}
@@ -260,11 +257,6 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
             />
             <Button size="sm" onClick={handleCreate}>Create</Button>
           </div>
-          {error && (
-            <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
-              <p className="text-xs text-gray-400">{error}</p>
-            </div>
-          )}
           {success && (
             <div className="rounded-md border border-upb-green/20 bg-upb-green/5 px-3 py-2">
               <p className="text-xs text-upb-green">{success}</p>
@@ -274,49 +266,86 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
       </div>
     </div>
 
+    {createError && (
+      <div
+        className="pointer-events-auto flex items-center justify-center"
+        style={{ position: "fixed", inset: 0, zIndex: 2147483648, background: "rgba(0,0,0,0.45)", animation: "gwa-fade 0.15s ease-out both" }}>
+        <div
+          className="bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden"
+          style={{ width: "min(20rem, 92vw)", animation: "gwa-slide-up 0.2s ease-out both" }}>
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+            <p className="text-sm font-semibold text-gray-900">Cannot create term</p>
+            <button onClick={() => setCreateError(null)} className="h-6 w-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors text-lg leading-none">×</button>
+          </div>
+          <div className="px-5 py-4 space-y-3">
+            <p className="text-[11px] text-gray-500 leading-relaxed">{createError}</p>
+            <Button size="sm" className="w-full" onClick={() => setCreateError(null)}>Got it</Button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {noDataMsg && (
+      <div
+        className="pointer-events-auto flex items-center justify-center"
+        style={{ position: "fixed", inset: 0, zIndex: 2147483648, background: "rgba(0,0,0,0.45)", animation: "gwa-fade 0.15s ease-out both" }}>
+        <div
+          className="bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden"
+          style={{ width: "min(20rem, 92vw)", animation: "gwa-slide-up 0.2s ease-out both" }}>
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+            <p className="text-sm font-semibold text-gray-900">No data yet</p>
+            <button onClick={() => setNoDataMsg(null)} className="h-6 w-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors text-lg leading-none">×</button>
+          </div>
+          <div className="px-5 py-4 space-y-3">
+            <div className="rounded-md bg-gray-50 border border-gray-100 px-3 py-2.5 space-y-1">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">What you need</p>
+              <p className="text-[11px] text-gray-600 leading-relaxed">{noDataMsg}</p>
+            </div>
+            <Button size="sm" className="w-full" onClick={() => setNoDataMsg(null)}>Got it</Button>
+          </div>
+        </div>
+      </div>
+    )}
+
     {pendingImport && (
       <div
         className="pointer-events-auto flex items-center justify-center"
-        style={{ position: "fixed", inset: 0, zIndex: 2147483648, background: "rgba(0,0,0,0.35)", animation: "gwa-fade 0.15s ease-out both" }}>
+        style={{ position: "fixed", inset: 0, zIndex: 2147483648, background: "rgba(0,0,0,0.45)", animation: "gwa-fade 0.15s ease-out both" }}>
         <div
           className="flex flex-col bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden"
-          style={{ width: "min(28rem, 92vw)", maxHeight: "72vh", animation: "gwa-slide-up 0.2s ease-out both" }}>
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 shrink-0">
+          style={{ width: "min(22rem, 92vw)", maxHeight: "72vh", animation: "gwa-slide-up 0.2s ease-out both" }}>
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 shrink-0">
             <h2 className="text-sm font-semibold text-gray-900">Review Import</h2>
-            <Button variant="icon" size="icon" onClick={() => setPendingImport(null)} className="text-lg leading-none">×</Button>
+            <button onClick={() => setPendingImport(null)} className="h-6 w-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors text-lg leading-none">×</button>
           </div>
-          <div className="px-5 py-2.5 bg-amber-50 border-b border-amber-100 flex flex-wrap gap-x-4 gap-y-0.5 shrink-0">
+          <div className="px-5 py-4 space-y-3 flex flex-col flex-1 overflow-hidden">
+            <p className="text-[11px] text-gray-500 shrink-0">
+              {pendingImport.newCount > 0 && (
+                <span className="text-upb-green font-medium">{pendingImport.newCount} new term{pendingImport.newCount !== 1 ? "s" : ""} will be added. </span>
+              )}
+              {pendingImport.conflicts.length > 0
+                ? <><span className="font-medium text-gray-700">{pendingImport.conflicts.length} term{pendingImport.conflicts.length !== 1 ? "s" : ""}</span> already saved will be overwritten:</>
+                : pendingImport.newCount === 0 ? <span className="text-gray-400">No changes.</span> : null
+              }
+            </p>
             {pendingImport.conflicts.length > 0 && (
-              <span className="text-xs text-amber-700">
-                <span className="font-semibold">{pendingImport.conflicts.length}</span> term{pendingImport.conflicts.length !== 1 ? "s" : ""} will be overwritten
-              </span>
+              <div className="space-y-1.5 overflow-y-auto flex-1">
+                {pendingImport.conflicts.map(c => (
+                  <div key={c.key} className="rounded-md bg-gray-50 border border-gray-100 px-3 py-2">
+                    <p className="text-[11px] font-medium text-gray-700 truncate">{c.key}</p>
+                    <p className="text-[10px] text-gray-400">
+                      Saved: <span className="font-medium text-gray-600">{c.oldGwa.toFixed(4)}</span>
+                      {" → "}
+                      New: <span className="font-medium text-upb-green">{c.newGwa.toFixed(4)}</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
             )}
-            {pendingImport.newCount > 0 && (
-              <span className="text-xs text-upb-green">
-                <span className="font-semibold">{pendingImport.newCount}</span> new term{pendingImport.newCount !== 1 ? "s" : ""} added
-              </span>
-            )}
-            {pendingImport.conflicts.length === 0 && pendingImport.newCount === 0 && (
-              <span className="text-xs text-gray-400">No changes.</span>
-            )}
-          </div>
-          <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-            {pendingImport.conflicts.length === 0 ? (
-              <p className="py-10 text-center text-sm text-gray-400">No conflicts. Safe to import.</p>
-            ) : (
-              pendingImport.conflicts.map(c => (
-                <div key={c.key} className="flex items-center gap-3 px-5 py-2.5 min-w-0">
-                  <span className="flex-1 truncate text-xs text-gray-800 min-w-0">{c.key}</span>
-                  <span className="shrink-0 tabular-nums text-[11px] text-gray-400">{c.oldGwa.toFixed(4)}</span>
-                  <span className="shrink-0 text-[11px] text-amber-500">→</span>
-                  <span className="shrink-0 tabular-nums text-[11px] font-semibold text-upb-green">{c.newGwa.toFixed(4)}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="border-t border-gray-200 px-5 py-3 flex gap-2 shrink-0">
-            <Button size="sm" variant="secondary" className="flex-1" onClick={() => setPendingImport(null)}>Cancel</Button>
-            <Button size="sm" className="flex-1" onClick={doImport}>Confirm Import</Button>
+            <div className="flex gap-2 shrink-0">
+              <Button size="sm" variant="secondary" className="flex-1" onClick={() => setPendingImport(null)}>Cancel</Button>
+              <Button size="sm" className="flex-1" onClick={doImport}>Confirm Import</Button>
+            </div>
           </div>
         </div>
       </div>
@@ -340,7 +369,8 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
 
     {confirmExport && (
       <ConfirmModal
-        message="Export all saved grades as a JSON file?"
+        title="Export grades"
+        message="This will download all your saved grades as a JSON file."
         confirmLabel="Export"
         onConfirm={() => { setConfirmExport(false); handleExport() }}
         onCancel={() => setConfirmExport(false)}
@@ -379,7 +409,8 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
 
     {confirmReset && (
       <ConfirmModal
-        message="Reset all saved terms? This cannot be undone."
+        title="Reset all data"
+        message="This will permanently delete all saved terms. This cannot be undone."
         confirmLabel="Reset"
         confirmVariant="danger"
         onConfirm={() => { setConfirmReset(false); onReset() }}

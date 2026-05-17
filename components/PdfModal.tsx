@@ -295,7 +295,7 @@ export function PdfModal({ savedTerms, termOrder, onClose }: Props) {
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 shrink-0">
           <div>
             <h2 className="text-sm font-semibold text-gray-900">Export PDF Report</h2>
-            <p className="text-[10px] text-gray-400">{keys.length} term{keys.length !== 1 ? "s" : ""}  {Math.round(cumulative.units)} total units</p>
+            <p className="text-[10px] text-gray-400">{keys.length} term{keys.length !== 1 ? "s" : ""} · {Math.round(cumulative.units)} total units</p>
           </div>
           <Button variant="icon" size="icon" onClick={onClose} className="text-lg leading-none">×</Button>
         </div>

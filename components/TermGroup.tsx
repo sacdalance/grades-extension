@@ -173,7 +173,8 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
 
     {confirmDelete && (
       <ConfirmModal
-        message={`Delete all saved data for "${termKey}"?`}
+        title="Delete term"
+        message={`This will permanently delete all saved data for "${termKey}".`}
         confirmLabel="Delete"
         confirmVariant="danger"
         onConfirm={() => { setConfirmDelete(false); onDeleteTerm(termKey) }}

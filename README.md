@@ -9,11 +9,13 @@ A Chrome extension that automatically calculates your General Weighted Average (
 ## Features
 
 - **Auto GWA Calculation** — Reads your grades from the AMIS portal and instantly computes your term and cumulative GWA
+- **Scan AMIS** — Automatically scans all your terms from the AMIS portal in one go and imports them
 - **Grade History** — Save grades across multiple terms and track your academic progress over time
 - **Latin Honor Projection** — See your chances of graduating Cum Laude, Magna Cum Laude, or Summa Cum Laude based on your current GWA and remaining units
 - **What-If Calculator** — Simulate future grades and see how they would affect your cumulative GWA
 - **Grade Analysis** — View GWA trends, grade distribution breakdown, consistency metrics, and degree progress
 - **Share as Image** — Export your GWA card as a PNG with customizable display options
+- **Export PDF Report** — Download a formatted PDF of all your saved terms with a cumulative summary and legal disclaimer
 
 ---
 
@@ -31,9 +33,9 @@ To install manually:
 ## Usage
 
 1. Log in to the UP AMIS grades portal
-2. Navigate to your grades page
+2. Navigate to the Grades tab
 3. The extension widget will appear on the right side of the page
-4. Click **Save Term** to store your current semester's grades
+4. Click **Save Term** to store the currently displayed semester's grades, or use **Scan AMIS** to import all terms automatically
 5. Use the dashboard to view your GWA, analyze trends, or run projections
 
 ---
@@ -44,6 +46,7 @@ To install manually:
 - [React](https://react.dev)
 - [Tailwind CSS](https://tailwindcss.com)
 - [Recharts](https://recharts.org)
+- [jsPDF](https://github.com/parallax/jsPDF) — PDF generation
 - [Lucide Icons](https://lucide.dev)
 
 ---
