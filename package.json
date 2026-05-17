@@ -1,7 +1,7 @@
 {
   "name": "amis-gwa-calculator",
   "displayName": "GinaGWA mo?!",
-  "version": "1.67.0",
+  "version": "1.67.1",
   "description": "Automatically calculates your GWA on the UP AMIS grades portal. Also known as AMIS GWA Calculator.",
   "scripts": {
     "dev": "plasmo dev",
