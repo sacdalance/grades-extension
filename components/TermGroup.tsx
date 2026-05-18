@@ -22,6 +22,12 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [nameInput, setNameInput] = useState(termKey)
   const pending = useRef(false)
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const debouncedUpdate = (termKey: string, idx: number, changes: Partial<Subject>) => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    debounceTimer.current = setTimeout(() => { onUpdateSubject(termKey, idx, changes) }, 500)
+  }
 
   const commitRename = () => {
     const trimmed = nameInput.trim()
@@ -99,7 +105,7 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
                       value={s.code}
                       maxLength={15}
                       className="text-xs"
-                      onChange={(e) => onUpdateSubject(termKey, idx, { code: e.target.value })}
+                      onChange={(e) => debouncedUpdate(termKey, idx, { code: e.target.value })}
                     />
                   </div>
                 </td>
@@ -109,7 +115,7 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
                     className="text-xs text-center"
                     onChange={(e) => {
                       const v = Math.min(6, Math.max(0, Math.round(parseFloat(e.target.value) || 0)))
-                      onUpdateSubject(termKey, idx, { units: v })
+                      debouncedUpdate(termKey, idx, { units: v })
                     }}
                   />
                 </td>

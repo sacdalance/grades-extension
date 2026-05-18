@@ -1,7 +1,7 @@
 {
   "name": "upb-gwa-calculator",
   "displayName": "GinaGWA mo?! - UPB GWA Calculator",
-  "version": "1.67.3",
+  "version": "1.67.4",
   "description": "Calculate, track, scan, and analyze your GWA on UP AMIS. Grade history, breakdowns, PDF export. No sign up. No data collected.",
   "scripts": {
     "dev": "plasmo dev",

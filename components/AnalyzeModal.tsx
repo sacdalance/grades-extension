@@ -97,7 +97,7 @@ export function AnalyzeModal({ savedTerms, termOrder, totalUnits, currentUnits, 
     const firstHalfAvg = chartData.slice(0, half || 1).reduce((s, d) => s + d.termGWA, 0) / (half || 1)
     const secondHalfAvg = chartData.slice(half).reduce((s, d) => s + d.termGWA, 0) / (chartData.length - half)
     const diff = firstHalfAvg - secondHalfAvg
-    const trend = chartData.length < 2 ? null : Math.abs(diff) < 0.05 ? "Stable" : diff < 0 ? "Improving" : "Declining"
+    const trend = chartData.length < 2 ? null : Math.abs(diff) < 0.05 ? "Stable" : diff > 0 ? "Improving" : "Declining"
     const trendColor = trend === "Improving" ? "text-upb-green" : trend === "Declining" ? "text-gray-900" : "text-gray-500"
     const maxUnits = Math.max(...chartData.map(d => d.units))
     const heaviest = chartData.filter(d => d.units === maxUnits).reduce((a, b) => a.termGWA <= b.termGWA ? a : b)

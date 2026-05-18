@@ -29,6 +29,9 @@ export function App() {
   const [termOrder, setTermOrder] = useStorage<string[]>("termOrder", (v) =>
     v === undefined ? [] : v
   )
+  const [whatIfTerms, setWhatIfTerms] = useStorage<import("~types").WhatIfTerm[]>("whatIfTerms", (v) =>
+    Array.isArray(v) ? v : []
+  )
 
   const { data: current, status, setStatus } = useGradeScanner()
   const cumulative = calcCumulativeGWA(Object.values(terms))
@@ -133,17 +136,23 @@ export function App() {
     return await scanAllTerms(onProgress)
   }
 
+  const savingScan = useRef(false)
   const handleSaveScan = async (results: import("~types").CurrentData[]): Promise<number> => {
-    if (results.length === 0) return 0
-    const newTerms = { ...savedTermsRef.current }
-    const newOrder = [...(termOrder ?? [])]
-    for (const data of results) {
-      if (!newTerms[data.term]) newOrder.push(data.term)
-      newTerms[data.term] = { term: data.term, units: data.units, gwa: data.gwa, subjects: data.subjects }
+    if (results.length === 0 || savingScan.current) return 0
+    savingScan.current = true
+    try {
+      const newTerms = { ...savedTermsRef.current }
+      const newOrder = [...(termOrder ?? [])]
+      for (const data of results) {
+        if (!newTerms[data.term]) newOrder.push(data.term)
+        newTerms[data.term] = { term: data.term, units: data.units, gwa: data.gwa, subjects: data.subjects }
+      }
+      await persist(newTerms)
+      await setTermOrder(newOrder.sort((a, b) => chronoOrder(a) - chronoOrder(b)))
+      return results.length
+    } finally {
+      savingScan.current = false
     }
-    await persist(newTerms)
-    await setTermOrder(newOrder.sort((a, b) => chronoOrder(a) - chronoOrder(b)))
-    return results.length
   }
 
   const handleDeleteSubject = async (termKey: string, idx: number) => {
@@ -169,6 +178,8 @@ export function App() {
         onManage={() => setModalOpen(true)}
         onScanAll={handleScanAll}
         onSaveScan={handleSaveScan}
+        whatIfTerms={whatIfTerms ?? []}
+        onSaveWhatIfTerms={async (t) => { await setWhatIfTerms(t) }}
       />
       {modalOpen && (
         <Modal

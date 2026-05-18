@@ -7,7 +7,7 @@ import { ContactModal } from "~components/ContactModal"
 import { ProjectionModal } from "~components/ProjectionModal"
 import { WhatIfModal } from "~components/WhatIfModal"
 import { TermsModal } from "~components/TermsModal"
-import type { CurrentData, Term } from "~types"
+import type { CurrentData, Term, WhatIfTerm } from "~types"
 
 interface Props {
   current: CurrentData
@@ -21,6 +21,8 @@ interface Props {
   onManage: () => void
   onScanAll: (onProgress: (current: string, done: number, total: number) => void) => Promise<import("~types").CurrentData[]>
   onSaveScan: (results: import("~types").CurrentData[]) => Promise<number>
+  whatIfTerms: WhatIfTerm[]
+  onSaveWhatIfTerms: (terms: WhatIfTerm[]) => Promise<void>
 }
 
 type ScanPhase = "confirm" | "scanning" | "conflicts" | "done"
@@ -34,7 +36,7 @@ function StatBox({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function Dashboard({ current, cumulative, savedTerms, graduationUnits, onSaveTotalUnits, status, saveState, onSave, onManage, onScanAll, onSaveScan }: Props) {
+export function Dashboard({ current, cumulative, savedTerms, graduationUnits, onSaveTotalUnits, status, saveState, onSave, onManage, onScanAll, onSaveScan, whatIfTerms, onSaveWhatIfTerms }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [isCollapsing, setIsCollapsing] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
@@ -60,9 +62,13 @@ export function Dashboard({ current, cumulative, savedTerms, graduationUnits, on
   useEffect(() => {
     const check = () => setCanScan(!!document.querySelector(".vs__search"))
     check()
-    const observer = new MutationObserver(check)
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const observer = new MutationObserver(() => {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(check, 300)
+    })
     observer.observe(document.body, { childList: true, subtree: true })
-    return () => observer.disconnect()
+    return () => { observer.disconnect(); if (timer) clearTimeout(timer) }
   }, [])
 
   const showToast = (msg: string, duration = 4000) => {
@@ -297,6 +303,8 @@ export function Dashboard({ current, cumulative, savedTerms, graduationUnits, on
           totalUnits={graduationUnits}
           onSaveTotalUnits={onSaveTotalUnits}
           onClose={() => setWhatIfOpen(false)}
+          savedTerms={whatIfTerms}
+          onSaveTerms={onSaveWhatIfTerms}
         />
       )}
 

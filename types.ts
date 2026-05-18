@@ -23,3 +23,18 @@ export interface CurrentData {
   term: string
   subjects: Subject[]
 }
+
+export interface WhatIfSubject {
+  id: number
+  code: string
+  units: number
+  grade: number
+  gradeLabel: string
+  excludeFromGWA: boolean
+}
+
+export interface WhatIfTerm {
+  id: number
+  name: string
+  subjects: WhatIfSubject[]
+}

@@ -1,8 +1,8 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback } from "react"
 import { X, Trash2 } from "lucide-react"
 import { Button } from "~components/ui/button"
 import { Input } from "~components/ui/input"
-import { ProjectionModal } from "~components/ProjectionModal"
+import { ProjectionModal, SetupScreen } from "~components/ProjectionModal"
 import { getScholarStatus, displayScholar } from "~utils/honors"
 
 interface Props {
@@ -11,24 +11,14 @@ interface Props {
   totalUnits: number
   onSaveTotalUnits: (units: number) => void
   onClose: () => void
+  savedTerms: WTerm[]
+  onSaveTerms: (terms: WTerm[]) => Promise<void>
 }
 
 const UP_GRADES = [1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00, 4.00, 5.00]
 
-interface WSubject {
-  id: number
-  code: string
-  units: number
-  grade: number
-  gradeLabel: string
-  excludeFromGWA: boolean
-}
-
-interface WTerm {
-  id: number
-  name: string
-  subjects: WSubject[]
-}
+type WSubject = { id: number; code: string; units: number; grade: number; gradeLabel: string; excludeFromGWA: boolean }
+type WTerm = { id: number; name: string; subjects: WSubject[] }
 
 function makeSubject(id: number): WSubject {
   return { id, code: "New Subject", units: 3, grade: 1.0, gradeLabel: "", excludeFromGWA: false }
@@ -43,9 +33,9 @@ function termGWA(subjects: WSubject[]): { gwa: number; units: number } {
 
 function StatBox({ label, value, sub }: { label: string; value: string; sub?: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-0.5 rounded-md bg-upb-green/5 border border-upb-green/10 px-3 py-2.5 text-center">
+    <div className="flex flex-col gap-0.5 rounded-md bg-upb-green/5 border border-upb-green/10 px-3 py-1.5 text-center">
       <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{label}</span>
-      <span className="text-xl font-semibold text-upb-green tabular-nums leading-none">{value}</span>
+      <span className="text-base font-semibold text-upb-green tabular-nums leading-none">{value}</span>
       {sub && <span className="text-[10px] text-gray-400 mt-0.5">{sub}</span>}
     </div>
   )
@@ -193,17 +183,23 @@ function WhatIfTermGroup({ term, onUpdate, onDelete, nextSubjectId }: {
   )
 }
 
-export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalUnits, onClose }: Props) {
+export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalUnits, onClose, savedTerms, onSaveTerms }: Props) {
   const sid = useRef(0)
   const tid = useRef(0)
   const nextSid = () => ++sid.current
   const nextTid = () => ++tid.current
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const debouncedSave = useCallback((next: WTerm[]) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => { debouncedSave(next) }, 600)
+  }, [onSaveTerms])
 
-  const [terms, setTerms] = useState<WTerm[]>([
-    { id: nextTid(), name: "Hypothetical Term 1", subjects: [makeSubject(nextSid())] }
-  ])
+  const [terms, setTerms] = useState<WTerm[]>(() =>
+    savedTerms.length > 0 ? savedTerms : [{ id: nextTid(), name: "Hypothetical Term 1", subjects: [makeSubject(nextSid())] }]
+  )
   const [newTermName, setNewTermName] = useState("")
   const [projectOpen, setProjectOpen] = useState(false)
+  const [setupOpen, setSetupOpen] = useState(false)
   const [subjectPrompt, setSubjectPrompt] = useState(false)
   const [pendingTermName, setPendingTermName] = useState("")
   const [pendingSubjectCount, setPendingSubjectCount] = useState(1)
@@ -228,17 +224,29 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
   const confirmCreate = () => {
     const name = pendingTermName
     const subjects = Array.from({ length: pendingSubjectCount }, () => makeSubject(nextSid()))
-    setTerms(prev => [...prev, { id: nextTid(), name, subjects }])
+    setTerms(prev => {
+      const next = [...prev, { id: nextTid(), name, subjects }]
+      debouncedSave(next)
+      return next
+    })
     setNewTermName("")
     setSubjectPrompt(false)
   }
 
   const updateTerm = (id: number, updated: WTerm) => {
-    setTerms(prev => prev.map(t => t.id === id ? updated : t))
+    setTerms(prev => {
+      const next = prev.map(t => t.id === id ? updated : t)
+      debouncedSave(next)
+      return next
+    })
   }
 
   const deleteTerm = (id: number) => {
-    setTerms(prev => prev.filter(t => t.id !== id))
+    setTerms(prev => {
+      const next = prev.filter(t => t.id !== id)
+      debouncedSave(next)
+      return next
+    })
   }
 
   return (
@@ -258,7 +266,7 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
           </div>
 
           {/* Projected stats */}
-          <div className="px-5 py-4 border-b border-gray-100 shrink-0 space-y-3">
+          <div className="px-5 py-2.5 border-b border-gray-100 shrink-0 space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <StatBox
                 label="Units"
@@ -284,9 +292,9 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
               />
             </div>
             <Button
-              className="w-full bg-gray-900 hover:bg-gray-800 text-white h-9 shadow-sm font-semibold text-sm"
-              onClick={() => setProjectOpen(true)}
-              disabled={projectedGWA === 0 || totalUnits === 0}>
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white h-7 shadow-sm font-semibold text-xs"
+              onClick={() => totalUnits === 0 ? setSetupOpen(true) : setProjectOpen(true)}
+              disabled={projectedGWA === 0}>
               Project Latin Honors
             </Button>
           </div>
@@ -295,9 +303,9 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             <div className="pl-3 border-l-2 border-upb-green/30">
               <p className="text-xs font-semibold text-gray-900">What-If Calculator</p>
-              <p className="text-[10px] text-gray-400">Starting from your {Math.round(currentUnits)} saved units · <span className="font-bold text-gray-600">{currentGWA.toFixed(4)}</span> GWA</p>
+              <p className="text-[10px] text-gray-400">Starting from your {Math.round(currentUnits)} saved units - <span className="font-bold text-gray-600">{currentGWA.toFixed(4)}</span> GWA</p>
               <p className="text-[10px] text-gray-500 leading-relaxed mt-1">
-                Add hypothetical terms and subjects below to simulate how future grades would affect your cumulative GWA. Changes here are <span className="font-medium text-gray-700">not saved</span> and will be lost on page reload.
+                Add hypothetical terms and subjects below to simulate how future grades would affect your cumulative GWA. Changes here are <span className="font-medium text-gray-700">saved</span> and will persist across sessions.
               </p>
             </div>
             {terms.map(t => (
@@ -355,6 +363,26 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
               <Button variant="secondary" size="sm" onClick={() => setSubjectPrompt(false)}>Cancel</Button>
               <Button size="sm" onClick={confirmCreate}>Create</Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {setupOpen && (
+        <div
+          className="pointer-events-auto flex items-center justify-center"
+          style={{ position: "fixed", inset: 0, zIndex: 2147483649, background: "rgba(0,0,0,0.4)", animation: "gwa-fade 0.15s ease-out both" }}>
+          <div
+            className="flex flex-col bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden"
+            style={{ width: "min(22rem, 92vw)", animation: "gwa-slide-up 0.2s ease-out both" }}>
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200">
+              <h2 className="text-sm font-semibold text-gray-900">Graduation Units</h2>
+              <Button variant="icon" size="icon" onClick={() => setSetupOpen(false)} className="text-lg leading-none">×</Button>
+            </div>
+            <SetupScreen
+              totalUnits={totalUnits}
+              onSave={(v) => { onSaveTotalUnits(v); setSetupOpen(false); setProjectOpen(true) }}
+              onCancel={() => setSetupOpen(false)}
+            />
           </div>
         </div>
       )}
