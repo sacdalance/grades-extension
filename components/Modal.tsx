@@ -385,7 +385,7 @@ export function Modal({ savedTerms, termOrder, onClose, onUpdateSubject, onAddSu
           className="bg-white rounded-lg border border-gray-200 shadow-lg px-5 py-4 space-y-4"
           style={{ width: "min(20rem, 92vw)", animation: "gwa-slide-up 0.2s ease-out both" }}>
           <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-800">Create term "{newTerm.trim()}"?</p>
+            <p className="text-sm font-medium text-gray-800 break-words">Create term "{newTerm.trim()}"?</p>
             <p className="text-[11px] text-gray-400">How many subjects to start with?</p>
           </div>
           <div className="flex items-center gap-3">

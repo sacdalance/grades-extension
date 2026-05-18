@@ -32,7 +32,7 @@ export function ConfirmModal({ title, message, onConfirm, onCancel, confirmLabel
           </button>
         </div>
         <div className="px-5 py-4 space-y-3">
-          <p className="text-[11px] text-gray-500 leading-relaxed">{message}</p>
+          <p className="text-[11px] text-gray-500 leading-relaxed break-words">{message}</p>
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" className="flex-1" onClick={onCancel}>Cancel</Button>
             <Button
