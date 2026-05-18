@@ -149,7 +149,7 @@ export function TermGroup({ termKey, term, onUpdateSubject, onAddSubject, onDele
                       title={s.excludeFromGWA ? "Click to include in GWA" : "Click to exclude from GWA"}
                       disabled={!!s.gradeLabel}
                       onClick={() => onUpdateSubject(termKey, idx, { excludeFromGWA: !s.excludeFromGWA })}
-                      className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-tight transition-all ${
+                      className={`w-16 py-1 rounded text-[9px] font-bold uppercase tracking-tight transition-all ${
                         s.excludeFromGWA
                           ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
                           : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600"

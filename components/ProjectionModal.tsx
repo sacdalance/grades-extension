@@ -80,12 +80,25 @@ function getGradeMix(avg: number): string {
   return "Need to maintain passing grades (3.00)"
 }
 
-function ProjectionRow({ p, currentGWA, remainingUnits }: { p: Projection; currentGWA: number; remainingUnits: number }) {
-  // Bar shows how achievable the required future GWA is:
-  // required = 1.00 (perfect) → 0% (very hard), required = 5.00 (worst) → 100% (easy/guaranteed)
+const UP_GRADE_STEPS = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 4.0, 5.0]
+
+function gradeToIndexPct(gwa: number): number {
+  // Find surrounding steps and interpolate index position
+  for (let i = 0; i < UP_GRADE_STEPS.length - 1; i++) {
+    const lo = UP_GRADE_STEPS[i], hi = UP_GRADE_STEPS[i + 1]
+    if (gwa <= hi) {
+      const t = (gwa - lo) / (hi - lo)
+      return ((i + t) / (UP_GRADE_STEPS.length - 1)) * 100
+    }
+  }
+  return 100
+}
+
+function ProjectionRow({ p, remainingUnits }: { p: Projection; remainingUnits: number }) {
+  // Bar uses equal-interval index spacing across UP grade steps
   const barPct = p.status === "guaranteed" ? 100
     : p.status === "impossible" ? 0
-    : Math.min(100, Math.max(0, ((p.requiredGWA! - 1.0) / 4.0) * 100))
+    : Math.min(100, Math.max(0, gradeToIndexPct(p.requiredGWA!)))
 
   return (
     <div className="px-5 py-3.5 space-y-2">
@@ -129,9 +142,16 @@ function ProjectionRow({ p, currentGWA, remainingUnits }: { p: Projection; curre
             />
           )}
         </div>
-        <div className="flex justify-between">
-          <span className="text-[9px] text-gray-300 tabular-nums">1.00 ← harder</span>
-          <span className="text-[9px] text-gray-300 tabular-nums">easier → 5.00</span>
+        <div className="relative flex justify-between">
+          {UP_GRADE_STEPS.map((g, i) => (
+            <span
+              key={g}
+              className="text-[8px] text-gray-400 tabular-nums"
+              style={{ position: "absolute", left: `${(i / (UP_GRADE_STEPS.length - 1)) * 100}%`, transform: "translateX(-50%)" }}>
+              {g % 1 === 0 ? g.toFixed(0) : g.toFixed(2).replace(/\.?0+$/, "")}
+            </span>
+          ))}
+          <span className="invisible text-[8px]">.</span>
         </div>
       </div>
     </div>
@@ -237,7 +257,7 @@ export function ProjectionModal({ currentGWA, currentUnits, totalUnits, onClose,
               {/* Projection rows */}
               <div className="divide-y divide-gray-100">
                 {projections.map((p) => (
-                  <ProjectionRow key={p.tier} p={p} currentGWA={currentGWA} remainingUnits={remainingUnits} />
+                  <ProjectionRow key={p.tier} p={p} remainingUnits={remainingUnits} />
                 ))}
               </div>
             </div>

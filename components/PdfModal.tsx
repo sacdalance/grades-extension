@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { jsPDF } from "jspdf"
 import { Button } from "~components/ui/button"
 import { calcCumulativeGWA } from "~utils/calculator"
@@ -13,6 +13,7 @@ interface Props {
 export function PdfModal({ savedTerms, termOrder, onClose }: Props) {
   const keys = termOrder.filter(k => !!savedTerms[k])
   const [generating, setGenerating] = useState(false)
+  const generatingRef = useRef(false)
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null)
   const [fullName, setFullName] = useState("")
   const [course, setCourse] = useState("")
@@ -39,6 +40,8 @@ export function PdfModal({ savedTerms, termOrder, onClose }: Props) {
   const cumulative = calcCumulativeGWA(Object.values(savedTerms))
 
   const handleGenerate = () => {
+    if (generatingRef.current) return
+    generatingRef.current = true
     setGenerating(true)
     try {
       const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
@@ -252,7 +255,7 @@ export function PdfModal({ savedTerms, termOrder, onClose }: Props) {
         i += 2
       }
 
-      // ── Legal notice ─────────────────────────────────────────────────────
+      // ── Disclaimer ───────────────────────────────────────────────────────
       const legalH = 18
       if (rowY + legalH > FOOTER_Y - 4) { doc.addPage(); drawFooter(); rowY = MT }
       rowY += 4
@@ -263,7 +266,7 @@ export function PdfModal({ savedTerms, termOrder, onClose }: Props) {
       doc.setFontSize(7)
       doc.setFont("helvetica", "bold")
       doc.setTextColor(80, 80, 80)
-      doc.text("LEGAL NOTICE", ML, rowY)
+      doc.text("DISCLAIMER", ML, rowY)
       rowY += 3.5
       doc.setFont("helvetica", "normal")
       doc.setFontSize(6.5)
@@ -279,6 +282,7 @@ export function PdfModal({ savedTerms, termOrder, onClose }: Props) {
 
       doc.save("gwa-report.pdf")
     } finally {
+      generatingRef.current = false
       setGenerating(false)
     }
   }
@@ -331,7 +335,7 @@ export function PdfModal({ savedTerms, termOrder, onClose }: Props) {
               <li>• All saved terms with subject breakdown</li>
               <li>• Term GWA and units per term</li>
               <li>• Cumulative GWA summary</li>
-              <li>• Legal notice and disclaimer</li>
+              <li>• Disclaimer</li>
             </ul>
           </div>
           <p className="text-[10px] text-red-400 font-medium">Not an official document. For personal reference only.</p>

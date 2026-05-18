@@ -3,7 +3,7 @@ import { X, Trash2 } from "lucide-react"
 import { Button } from "~components/ui/button"
 import { Input } from "~components/ui/input"
 import { ProjectionModal, SetupScreen } from "~components/ProjectionModal"
-import { getScholarStatus, displayScholar } from "~utils/honors"
+import { getScholarStatus, displayScholar, getLatinHonor } from "~utils/honors"
 
 interface Props {
   currentGWA: number
@@ -31,11 +31,11 @@ function termGWA(subjects: WSubject[]): { gwa: number; units: number } {
   return { gwa: units > 0 ? pts / units : 0, units }
 }
 
-function StatBox({ label, value, sub }: { label: string; value: string; sub?: React.ReactNode }) {
+function StatBox({ label, value, sub, muted }: { label: string; value: string; sub?: React.ReactNode; muted?: boolean }) {
   return (
-    <div className="flex flex-col gap-0.5 rounded-md bg-upb-green/5 border border-upb-green/10 px-3 py-1.5 text-center">
+    <div className={`flex flex-col gap-0.5 rounded-md px-3 py-1.5 text-center ${muted ? "bg-gray-50 border border-gray-100" : "bg-upb-green/5 border border-upb-green/10"}`}>
       <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{label}</span>
-      <span className="text-base font-semibold text-upb-green tabular-nums leading-none">{value}</span>
+      <span className={`text-base font-semibold tabular-nums leading-none ${muted ? "text-gray-800" : "text-upb-green"}`}>{value}</span>
       {sub && <span className="text-[10px] text-gray-400 mt-0.5">{sub}</span>}
     </div>
   )
@@ -155,7 +155,7 @@ function WhatIfTermGroup({ term, onUpdate, onDelete, nextSubjectId }: {
                     <button
                       disabled={!!s.gradeLabel}
                       onClick={() => updateSubject(s.id, { excludeFromGWA: !s.excludeFromGWA })}
-                      className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-tight transition-all ${
+                      className={`w-16 py-1 rounded text-[9px] font-bold uppercase tracking-tight transition-all ${
                         s.excludeFromGWA
                           ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
                           : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
@@ -269,21 +269,23 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
           <div className="px-5 py-2.5 border-b border-gray-100 shrink-0 space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <StatBox
-                label="Units"
-                value={Math.round(projectedUnits).toString()}
-                sub="total projected"
+                label="Saved Units"
+                value={Math.round(currentUnits).toString()}
+                sub="from your records"
               />
               <StatBox
-                label="GWA"
+                label="Saved GWA"
                 value={currentGWA.toFixed(4)}
-                sub="saved GWA"
+                sub="from your records"
               />
               <StatBox
-                label="Added"
-                value={addedUnits > 0 ? `+${Math.round(addedUnits)}` : "0"}
-                sub="units added"
+                muted
+                label="What-If Units"
+                value={Math.round(projectedUnits).toString()}
+                sub={addedUnits > 0 ? `+${Math.round(addedUnits)} added` : "no units added"}
               />
               <StatBox
+                muted
                 label="What-If GWA"
                 value={projectedGWA > 0 ? projectedGWA.toFixed(4) : currentGWA.toFixed(4)}
                 sub={projectedGWA > 0 && projectedGWA !== currentGWA
@@ -291,6 +293,21 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
                   : "no change"}
               />
             </div>
+            {(() => {
+              const gwa = projectedGWA > 0 ? projectedGWA : currentGWA
+              const honor = getLatinHonor(gwa)
+              if (!honor) return null
+              const isSumma = honor === "Summa Cum Laude"
+              const isMagna = honor === "Magna Cum Laude"
+              const colorBg = isSumma ? "bg-green-500/10 border-green-500" : isMagna ? "bg-green-800/10 border-green-800" : "bg-gray-200 border-gray-500"
+              const colorText = isSumma ? "text-green-600" : isMagna ? "text-green-800" : "text-gray-600"
+              return (
+                <div className={`flex items-center justify-between px-3 py-1.5 border-l-4 ${colorBg}`}>
+                  <span className={`text-[10px] font-semibold uppercase tracking-widest ${colorText}`}>What-If: On Track for {honor}</span>
+                  <span className={`text-[10px] tabular-nums opacity-60 ${colorText}`}>{gwa.toFixed(4)}</span>
+                </div>
+              )
+            })()}
             <Button
               className="w-full bg-gray-900 hover:bg-gray-800 text-white h-7 shadow-sm font-semibold text-xs"
               onClick={() => totalUnits === 0 ? setSetupOpen(true) : setProjectOpen(true)}
@@ -303,7 +320,7 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             <div className="pl-3 border-l-2 border-upb-green/30">
               <p className="text-xs font-semibold text-gray-900">What-If Calculator</p>
-              <p className="text-[10px] text-gray-400">Starting from your {Math.round(currentUnits)} saved units - <span className="font-bold text-gray-600">{currentGWA.toFixed(4)}</span> GWA</p>
+
               <p className="text-[10px] text-gray-500 leading-relaxed mt-1">
                 Add hypothetical terms and subjects below to simulate how future grades would affect your cumulative GWA. Changes here are <span className="font-medium text-gray-700">saved</span> and will persist across sessions.
               </p>

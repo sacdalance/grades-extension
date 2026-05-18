@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "~components/ui/button"
 import { calcCumulativeGWA } from "~utils/calculator"
 import { getScholarStatus, getLatinHonor, displayScholar, displayLatin } from "~utils/honors"
@@ -32,6 +32,8 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
   const [showShadow, setShowShadow] = useState(true)
   const [downloading, setDownloading] = useState(false)
   const [copying, setCopying] = useState(false)
+  const downloadingRef = useRef(false)
+  const copyingRef = useRef(false)
   const [previewUrl, setPreviewUrl] = useState("")
   const [logoImg, setLogoImg] = useState<HTMLImageElement | null>(null)
 
@@ -636,33 +638,39 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
   }, [selectedKey, includeTable, showTermGWA, showCumGWA, showScholar, showLatin, redactGWA, showShadow, term, cumulative.gwa, logoImg])
 
   const handleDownload = () => {
+    if (downloadingRef.current) return
     const canvas = buildCanvas()
     if (!canvas) return
+    downloadingRef.current = true
     setDownloading(true)
     canvas.toBlob(blob => {
-      if (!blob) { setDownloading(false); return }
+      if (!blob) { downloadingRef.current = false; setDownloading(false); return }
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
       a.download = `gwa-${selectedKey.replace(/\s+/g, "-").toLowerCase()}.png`
       a.click()
       URL.revokeObjectURL(url)
+      downloadingRef.current = false
       setDownloading(false)
     }, "image/png")
   }
 
   const handleCopy = () => {
+    if (copyingRef.current) return
     const canvas = buildCanvas()
     if (!canvas) return
+    copyingRef.current = true
     setCopying(true)
     canvas.toBlob(async blob => {
-      if (!blob) { setCopying(false); return }
+      if (!blob) { copyingRef.current = false; setCopying(false); return }
       try {
         await navigator.clipboard.write([
           new ClipboardItem({ [blob.type]: blob })
         ])
-        setTimeout(() => setCopying(false), 2000)
+        setTimeout(() => { copyingRef.current = false; setCopying(false) }, 2000)
       } catch {
+        copyingRef.current = false
         setCopying(false)
       }
     }, "image/png")
@@ -755,7 +763,7 @@ export function ShareModal({ savedTerms, termOrder, onClose }: Props) {
 
           {/* Preview — rendered from the same canvas as the export */}
           {previewUrl ? (
-            <div style={{ background: "#e5e7eb", borderRadius: "8px", padding: "8px" }}>
+            <div style={{ background: "#6b7280", borderRadius: "8px", padding: "8px" }}>
               <img
                 src={previewUrl}
                 alt="GWA card preview"

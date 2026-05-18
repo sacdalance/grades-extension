@@ -481,7 +481,7 @@ export function Dashboard({ current, cumulative, savedTerms, graduationUnits, on
                     <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
                       <div
                         className="h-full rounded-full bg-upb-green transition-all duration-300"
-                        style={{ width: `${(scanProgress.done / scanProgress.total) * 100}%` }}
+                        style={{ width: `${((scanProgress.done + 1) / scanProgress.total) * 100}%` }}
                       />
                     </div>
                   )}
