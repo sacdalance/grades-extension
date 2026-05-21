@@ -102,7 +102,7 @@ export function ContactModal({ onClose }: Props) {
               <Button variant="icon" size="icon" onClick={() => setSupportOpen(false)} className="text-lg leading-none">×</Button>
             </div>
             <div className="overflow-y-auto p-4 space-y-3">
-              <p className="text-xs text-gray-500 leading-relaxed">GinaGWA mo?! is a free, student-made tool built voluntarily to help fellow UP students. A little support goes a long way in keeping it maintained and improving.</p>
+              <p className="text-xs text-gray-500 leading-relaxed">GinaGWA mo?! is a free, student-made tool built voluntarily to help fellow UP students. A little support goes a long way in keeping it maintained and improving. Thank you very much!</p>
               <p className="text-xs text-gray-400 mt-1">Scan the QR code to send a support</p>
               <img
                 src={chrome.runtime.getURL("assets/152c214e-e638-482c-8805-749aef2bdf61.jpg")}

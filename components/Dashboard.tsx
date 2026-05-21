@@ -132,7 +132,7 @@ export function Dashboard({ current, cumulative, savedTerms, graduationUnits, on
     top: "4.5rem",
     right: "0.5rem",
     zIndex: 2147483647,
-    width: "min(17rem, calc(100vw - 0.75rem))",
+    width: "min(20rem, calc(100vw - 0.75rem))",
     pointerEvents: "auto",
     animation: isCollapsing
       ? "gwa-slide-out 0.2s ease-in both"
@@ -177,16 +177,13 @@ export function Dashboard({ current, cumulative, savedTerms, graduationUnits, on
 
         {/* Scholar banner */}
         {scholar.status && (
-          <div className={`flex items-center justify-between px-5 py-1.5 border-l-4 ${
-            scholar.status === "University Scholar" ? "bg-green-600/10 border-green-600"
+          <div className={`flex items-center justify-between px-5 py-1.5 border-l-4 ${scholar.status === "University Scholar" ? "bg-green-600/10 border-green-600"
             : "bg-green-800/10 border-green-800"
-          }`}>
-            <span className={`text-[10px] font-semibold uppercase tracking-widest ${
-              scholar.status === "University Scholar" ? "text-green-700" : "text-green-800"
-            }`}>{displayScholar(scholar.status)}</span>
-            <span className={`text-[10px] tabular-nums opacity-60 ${
-              scholar.status === "University Scholar" ? "text-green-700" : "text-green-800"
-            }`}>{current.gwa.toFixed(4)}</span>
+            }`}>
+            <span className={`text-[10px] font-semibold uppercase tracking-widest ${scholar.status === "University Scholar" ? "text-green-700" : "text-green-800"
+              }`}>{displayScholar(scholar.status)}</span>
+            <span className={`text-[10px] tabular-nums opacity-60 ${scholar.status === "University Scholar" ? "text-green-700" : "text-green-800"
+              }`}>{current.gwa.toFixed(4)}</span>
           </div>
         )}
 
@@ -205,6 +202,16 @@ export function Dashboard({ current, cumulative, savedTerms, graduationUnits, on
             {!scholar.status && scholar.reason && current.gwa > 0 && (
               <p className="text-xs text-gray-400">{scholar.reason}</p>
             )}
+
+            <div className="space-y-1">
+              <div className="border-l-2 border-upb-green/30 pl-2">
+                <p className="text-[10px] text-gray-400 leading-relaxed"><span className="font-medium text-gray-500">Scan AMIS</span> - automatically imports all your terms at once.</p>
+              </div>
+              <div className="border-l-2 border-upb-green/30 pl-2">
+                <p className="text-[10px] text-gray-400 leading-relaxed"><span className="font-medium text-gray-500">Save Term</span> - saves only the term selected in the dropdown.</p>
+              </div>
+              <p className="text-[10px] text-gray-400 pl-0.5">Must be on the <span className="font-medium text-gray-500">Grades</span> tab.</p>
+            </div>
 
             <div className="grid grid-cols-2 gap-2">
               <Button
@@ -230,21 +237,18 @@ export function Dashboard({ current, cumulative, savedTerms, graduationUnits, on
 
           {/* Latin honors banner */}
           {latinHonor && (
-            <div className={`flex items-center justify-between px-5 py-1.5 -mx-4 border-l-4 ${
-              latinHonor === "Summa Cum Laude" ? "bg-green-500/10 border-green-500"
+            <div className={`flex items-center justify-between px-5 py-1.5 -mx-4 border-l-4 ${latinHonor === "Summa Cum Laude" ? "bg-green-500/10 border-green-500"
               : latinHonor === "Magna Cum Laude" ? "bg-green-800/10 border-green-800"
-              : "bg-gray-200 border-gray-500"
-            }`}>
-              <span className={`text-[10px] font-semibold uppercase tracking-widest ${
-                latinHonor === "Summa Cum Laude" ? "text-green-600"
+                : "bg-gray-200 border-gray-500"
+              }`}>
+              <span className={`text-[10px] font-semibold uppercase tracking-widest ${latinHonor === "Summa Cum Laude" ? "text-green-600"
                 : latinHonor === "Magna Cum Laude" ? "text-green-800"
-                : "text-gray-600"
-              }`}>{displayLatin(latinHonor)}</span>
-              <span className={`text-[10px] tabular-nums opacity-60 ${
-                latinHonor === "Summa Cum Laude" ? "text-green-600"
+                  : "text-gray-600"
+                }`}>{displayLatin(latinHonor)}</span>
+              <span className={`text-[10px] tabular-nums opacity-60 ${latinHonor === "Summa Cum Laude" ? "text-green-600"
                 : latinHonor === "Magna Cum Laude" ? "text-green-800"
-                : "text-gray-600"
-              }`}>{cumulative.gwa.toFixed(4)}</span>
+                  : "text-gray-600"
+                }`}>{cumulative.gwa.toFixed(4)}</span>
             </div>
           )}
 
