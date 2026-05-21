@@ -269,23 +269,23 @@ export function WhatIfModal({ currentGWA, currentUnits, totalUnits, onSaveTotalU
           <div className="px-5 py-2.5 border-b border-gray-100 shrink-0 space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <StatBox
+                muted
                 label="Saved Units"
                 value={Math.round(currentUnits).toString()}
                 sub="from your records"
               />
               <StatBox
+                muted
                 label="Saved GWA"
                 value={currentGWA.toFixed(4)}
                 sub="from your records"
               />
               <StatBox
-                muted
                 label="What-If Units"
                 value={Math.round(projectedUnits).toString()}
                 sub={addedUnits > 0 ? `+${Math.round(addedUnits)} added` : "no units added"}
               />
               <StatBox
-                muted
                 label="What-If GWA"
                 value={projectedGWA > 0 ? projectedGWA.toFixed(4) : currentGWA.toFixed(4)}
                 sub={projectedGWA > 0 && projectedGWA !== currentGWA

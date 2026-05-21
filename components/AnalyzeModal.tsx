@@ -92,7 +92,8 @@ export function AnalyzeModal({ savedTerms, termOrder, totalUnits, currentUnits, 
     if (chartData.length === 0) return null
     const best = chartData.reduce((a, b) => a.termGWA <= b.termGWA ? a : b)
     const worst = chartData.reduce((a, b) => a.termGWA >= b.termGWA ? a : b)
-    const honorsSems = chartData.filter(d => d.termGWA <= 1.75).length
+    const eligibleSems = chartData.filter(d => d.units >= 15).length
+    const honorsSems = chartData.filter(d => d.termGWA <= 1.75 && d.units >= 15).length
     const half = Math.floor(chartData.length / 2)
     const firstHalfAvg = chartData.slice(0, half || 1).reduce((s, d) => s + d.termGWA, 0) / (half || 1)
     const secondHalfAvg = chartData.slice(half).reduce((s, d) => s + d.termGWA, 0) / (chartData.length - half)
@@ -102,7 +103,7 @@ export function AnalyzeModal({ savedTerms, termOrder, totalUnits, currentUnits, 
     const maxUnits = Math.max(...chartData.map(d => d.units))
     const heaviest = chartData.filter(d => d.units === maxUnits).reduce((a, b) => a.termGWA <= b.termGWA ? a : b)
     const heaviestBetter = heaviest.termGWA <= heaviest.cumGWA
-    return { best, worst, honorsSems, trend, trendColor, heaviest, heaviestBetter }
+    return { best, worst, honorsSems, eligibleSems, trend, trendColor, heaviest, heaviestBetter }
   }, [chartData])
 
   const breakdown = useMemo(() => {
@@ -280,8 +281,8 @@ export function AnalyzeModal({ savedTerms, termOrder, totalUnits, currentUnits, 
                     </div>
                     <div className="rounded-lg bg-gray-50 border border-gray-100 p-3">
                       <p className="text-[10px] text-gray-400 uppercase font-medium mb-1">Honors Semesters</p>
-                      <p className="text-lg font-bold text-upb-green tabular-nums">{insights.honorsSems} <span className="text-sm font-normal text-gray-400">/ {chartData.length}</span></p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">Terms with GWA [1.00, 1.75]</p>
+                      <p className="text-lg font-bold text-upb-green tabular-nums">{insights.honorsSems} <span className="text-sm font-normal text-gray-400">/ {insights.eligibleSems}</span></p>
+                      <p className="text-[10px] text-gray-500 mt-0.5">GWA [1.00, 1.75], excluding terms with &lt;15 units</p>
                     </div>
                   </div>
                 </div>
@@ -315,8 +316,8 @@ export function AnalyzeModal({ savedTerms, termOrder, totalUnits, currentUnits, 
                 if (failingCount > 0)
                   tips.push({ color: "#f43f5e", text: `You have ${failingCount} subject${failingCount !== 1 ? "s" : ""} with a grade above 3.00. These are factored into your cumulative GWA.` })
 
-                if (chartData.length >= 3 && honorsSems / chartData.length >= 0.75)
-                  tips.push({ color: "#16a34a", text: `You qualified for honors in ${honorsSems} of ${chartData.length} terms. That is strong, consistent academic performance.` })
+                if (insights.eligibleSems >= 3 && honorsSems / insights.eligibleSems >= 0.75)
+                  tips.push({ color: "#16a34a", text: `You qualified for honors in ${honorsSems} of ${insights.eligibleSems} eligible terms. That is strong, consistent academic performance.` })
 
                 if (tips.length === 0) return null
                 return (

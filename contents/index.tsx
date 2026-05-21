@@ -7,7 +7,7 @@ const interFace = new FontFace("Inter", `url(${interUrl})`, { style: "normal", w
 interFace.load().then(f => document.fonts.add(f)).catch(() => {})
 
 export const config: PlasmoCSConfig = {
-  matches: ["https://amis.upb.edu.ph/*", "https://amis-dev.upb.edu.ph/*"]
+  matches: ["https://amis.upb.edu.ph/*", "https://amis-dev.upb.edu.ph/*", "https://amis.uplb.edu.ph/*"]
 }
 
 export const getStyle: PlasmoGetStyle = () => {
